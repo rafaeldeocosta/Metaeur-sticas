@@ -9,11 +9,11 @@ def create_graph_from(f):
             f - string - filename of the PCSTP instance
 
         Returns:
-            G   - igraph.Graph
-            V   - list  - vertices
-            vertex_penalties    - dict - weight of vertices
-            E   - dict - edges
-            edge_costs  - dict - cost of edges
+            G: igraph.Graph
+            V:  list  of vertices
+            vertex_penalties: dict - {vertice: weight of vertices}
+            E: dict - {index: edges (Vi, Vj)}
+            edge_costs: dict - {index: cost of edges}
 
     """
 
@@ -31,9 +31,9 @@ def create_graph_from(f):
 
     for v in instance[node_index+2:link_index]:
         v = v.split()
-        V.append(int(v[0])-1)   # vertices ids are subtracted by one because
+        V.append(int(v[0]))   # vertices ids are subtracted by one because
                                 # igraph vertex id begins with 0
-        vertex_penalties[int(v[0])-1] = int(v[3])
+        vertex_penalties[int(v[0])] = int(v[3])
 
 
     E = {}  # dict of edges which key is the edge id and value the edge (vi,vj)
@@ -51,9 +51,11 @@ def create_graph_from(f):
 
     G = Graph()
     G.add_vertices(len(V))  # adding the number of vertices of the graph
-    G.vs["label"] = list(V) # setting labels to identify vertices
+    G.vs["name"] = list(V) # setting labels to identify vertices
     G.add_edges(list(E.values()))  # inserting edges of the graph
 
+    G.es['weight'] = list(edge_costs.values())
+    G.vs['cost'] = list(vertex_penalties.values())
 
     return G, V, vertex_penalties, E, edge_costs
 

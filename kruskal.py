@@ -1,5 +1,5 @@
 from igraph import Graph
-from utils import has_node
+# from utils import has_node
 from igraph import plot
 
 def kruskal(G, E, edge_costs):
@@ -21,8 +21,8 @@ def kruskal(G, E, edge_costs):
     # creating a forest F where each vertice is a separeted tree
     for v in G.vs:
         t = Graph()
-        t.add_vertex(v["label"])
-        t.vs["label"] = [v["label"]]
+        t.add_vertex(v["name"])
+        t.vs["name"] = [v["name"]]
         F.append(t)
 
     S = E.copy()    # All edges of the graph
@@ -47,8 +47,8 @@ def kruskal(G, E, edge_costs):
         print("Number of edges in S %s" % len(S))
 
         # search trees in the forest F where vertices u and v are
-        u = e[0]
-        v = e[1]
+        u = e[0] + 1
+        v = e[1] + 1
 
         t_u = None  # tree in F where the vertex u is
         t_v = None  # tree in F where the vertex v is
@@ -104,6 +104,7 @@ def kruskal(G, E, edge_costs):
             for w in t_v.vs:
                 new_t.add_vertex(w["name"])
 
+            # TODO: Temos que pegar o NOME dos vertíces das arestas em T_U e T_V, e fazer find no new_t
             for l in t_u.es:
                 source_vertex = new_t.vs[l.source]
                 target_vertex = new_t.vs[l.target]
@@ -121,7 +122,7 @@ def kruskal(G, E, edge_costs):
             new_t.add_edge(u_, v_)
 
             # TODO: check if new_t remain a tree
-            if 	new_t.is_tree():
+            if not new_t.is_tree():
                 continue
             else:
                 F.append(new_t)
