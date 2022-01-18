@@ -73,4 +73,5 @@ if __name__ == "__main__":
     print(edge_costs)
 
     layout = G.layout("lgl")
+    G.vs["label"] = G.vs["name"]
     plot(G,layout=layout)
