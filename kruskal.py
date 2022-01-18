@@ -1,6 +1,6 @@
 from igraph import Graph
-# from utils import has_node
 from igraph import plot
+from utils import get_atributes
 
 def kruskal(G, E, edge_costs):
     """
@@ -15,8 +15,9 @@ def kruskal(G, E, edge_costs):
             edge_costs  - dict - cost of edges
 
     """
+    G_ori = G.copy()  # G without alterations
 
-    F = [] # Set of Trees
+    F = []  # Set of Trees
 
     # creating a forest F where each vertice is a separeted tree
     for v in G.vs:
@@ -107,7 +108,6 @@ def kruskal(G, E, edge_costs):
 
             # TODO: Temos que pegar o NOME dos vertíces das arestas em T_U e T_V, e fazer find no new_t
 
-
             for l in t_u.es:
                 source_vertex = t_u.vs[l.source]["name"]
                 target_vertex = t_u.vs[l.target]["name"]
@@ -133,4 +133,7 @@ def kruskal(G, E, edge_costs):
                 F.remove(t_v)
 
     T = F[0]
+
+    T = get_atributes(G_ori, T)
+
     return T

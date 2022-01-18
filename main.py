@@ -1,4 +1,4 @@
-from utils import create_graph_from
+from utils import create_graph_from, select_sub_graph, calc_pontuacao
 from kruskal import kruskal
 from igraph import plot
 
@@ -9,15 +9,35 @@ if __name__ == "__main__":
 
 
     G, V, vertex_penalties, E, edge_costs = create_graph_from(arq)
-    # terminais = [4, 6, 13, 17, 43, 46, 61, 71, 78, 79, 91]
 
     # G.vs["label"] = G.vs["name"]
     # layout = G.layout("lgl")
     # plot(G, layout=layout)
 
+    terminais = [5, 7, 14, 18, 44, 47, 62, 72, 79, 80, 92]
+
+    G_terminais, E_terminais, edge_costs_terminais = select_sub_graph(G, terminais)
+
+    # G_terminais.vs["label"] = G_terminais.vs["name"]
+    # plot(G_terminais)
+
     T = kruskal(G, E, edge_costs)
 
     # plot graph
-    T.vs["label"] = T.vs["name"]
-    layout = T.layout("lgl")
-    plot(T, layout=layout)
+    # T.vs["label"] = T.vs["name"]
+    # layout = T.layout("lgl")
+    # plot(T, layout=layout)
+
+    T_terminais = kruskal(G_terminais, E_terminais, edge_costs_terminais)
+
+    T_terminais.vs["label"] = T_terminais.vs["name"]
+    layout = T_terminais.layout("lgl")
+    plot(T_terminais, layout=layout)
+
+    sol_T = calc_pontuacao(G, T)
+    sol_T_terminais = calc_pontuacao(G, T_terminais)
+
+    print('A pontuação de T é: {}'.format(sol_T))
+    print('A pontuação de T_terminais é: {}'.format(sol_T_terminais))
+
+
