@@ -45,14 +45,19 @@ def create_graph_from(f):
 
     for e in instance[link_index+2:-1]:
         e = e.split()
-        E[int(e[0])] = ( int(e[1])-1, int(e[2])-1)
+        E[int(e[0])] = ( int(e[1]), int(e[2]))
         edge_costs[int(e[0])] = int(e[3])
 
 
     G = Graph()
     G.add_vertices(len(V))  # adding the number of vertices of the graph
     G.vs["name"] = list(V) # setting labels to identify vertices
-    G.add_edges(list(E.values()))  # inserting edges of the graph
+
+    # inserting edges of the graph
+    for e in E.values():
+        u = e[0]
+        v = e[1]
+        G.add_edge(G.vs.find(name=u), G.vs.find(name=v))
 
     G.es['weight'] = list(edge_costs.values())
     G.vs['cost'] = list(vertex_penalties.values())
