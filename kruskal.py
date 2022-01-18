@@ -22,7 +22,6 @@ def kruskal(G, E, edge_costs):
     for v in G.vs:
         t = Graph()
         t.add_vertex(v["name"])
-        t.vs["name"] = [v["name"]]
         F.append(t)
 
     S = E.copy()    # All edges of the graph
