@@ -46,12 +46,14 @@ def kruskal(G, E, edge_costs):
         print("Number of edges in S %s" % len(S))
 
         # search trees in the forest F where vertices u and v are
-        u = e[0] + 1
-        v = e[1] + 1
+        u = e[0]
+        v = e[1]
 
         t_u = None  # tree in F where the vertex u is
         t_v = None  # tree in F where the vertex v is
 
+
+        # Find out trees that belong to vertex u and v
         for t in F:
             for w in t.vs:  # w is a vertex in the tree t
                 if w["name"] == u:
@@ -104,23 +106,25 @@ def kruskal(G, E, edge_costs):
                 new_t.add_vertex(w["name"])
 
             # TODO: Temos que pegar o NOME dos vertíces das arestas em T_U e T_V, e fazer find no new_t
+
+
             for l in t_u.es:
-                source_vertex = new_t.vs[l.source]
-                target_vertex = new_t.vs[l.target]
-                new_t.add_edge(source_vertex, target_vertex)
+                source_vertex = t_u.vs[l.source]["name"]
+                target_vertex = t_u.vs[l.target]["name"]
+                new_t.add_edge(new_t.vs.find(name=source_vertex),
+                    new_t.vs.find(name=target_vertex))
 
             for l in t_v.es:
-                source_vertex = new_t.vs[l.source]
-                target_vertex = new_t.vs[l.target]
-                new_t.add_edge(source_vertex, target_vertex)
+                source_vertex = t_v.vs[l.source]["name"]
+                target_vertex = t_v.vs[l.target]["name"]
+                new_t.add_edge(new_t.vs.find(name=source_vertex),
+                    new_t.vs.find(name=target_vertex))
 
             # inserting the edge e that links t_u and t_v
             # print("ligando t_u e t_v com a aresta %s -> %s " % (u,v))
-            u_ = new_t.vs.find(name=u)
-            v_ = new_t.vs.find(name=v)
-            new_t.add_edge(u_, v_)
+            new_t.add_edge(new_t.vs.find(name=u), new_t.vs.find(name=v))
 
-            # TODO: check if new_t remain a tree
+            # check if new_t remain a tree
             if not new_t.is_tree():
                 continue
             else:
