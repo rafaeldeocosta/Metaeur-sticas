@@ -1,4 +1,4 @@
-from utils import create_graph_from, select_sub_graph, calc_pontuacao, vert_premios
+from utils import create_graph_from, select_sub_graph, calc_pontuacao, vert_premios, tira_grau1
 from kruskal import kruskal
 from igraph import plot
 
@@ -29,6 +29,8 @@ if __name__ == "__main__":
 
     T_terminais, T_terminais_edges_list = kruskal(G_terminais, E_terminais, edge_costs_terminais)
     print(T_terminais.is_tree())
+
+    T_terminais, T_terminais_edges_list = tira_grau1(T_terminais, terminais)
 
     T_terminais.vs["label"] = T_terminais.vs["name"]
     layout = T_terminais.layout("lgl")
