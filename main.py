@@ -1,4 +1,4 @@
-from utils import create_graph_from, select_sub_graph, calc_pontuacao
+from utils import create_graph_from, select_sub_graph, calc_pontuacao, vert_premios
 from kruskal import kruskal
 from igraph import plot
 
@@ -7,14 +7,13 @@ if __name__ == "__main__":
 
     arq = "K100.1"
 
-
     G, V, vertex_penalties, E, edge_costs = create_graph_from(arq)
 
     # G.vs["label"] = G.vs["name"]
     # layout = G.layout("lgl")
     # plot(G, layout=layout)
 
-    terminais = [5, 7, 14, 18, 44, 47, 62, 72, 79, 80, 92]
+    terminais = vert_premios(G)
 
     G_terminais, E_terminais, edge_costs_terminais = select_sub_graph(G, terminais)
 

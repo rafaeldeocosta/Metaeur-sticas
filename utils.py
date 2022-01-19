@@ -1,7 +1,7 @@
 from igraph import Graph
 from igraph import plot
 import itertools as it
-import pandas as pd
+
 
 def create_graph_from(f):
     """
@@ -145,6 +145,7 @@ def select_sub_graph(G, vertices):
 
     return aux_G, E_aux, edges_cost_aux
 
+
 def get_atributes(G, tree):
     """
     Atribui os custos de arestas e penalidades de vertices de G em tree
@@ -200,7 +201,69 @@ def calc_pontuacao(G, tree):
     return total
 
 
+def tira_grau1(tree, terminais, iter_max=100):
+    """
+        Looping que retira os vertices de grau 1, até não ter vertices de grau 1 em vertices de stainer.
+    :param tree: graph.igraph
+        Um grafo para se retirar os vertices de grau1
+    :param terminais: list
+        Lista de "terminais", vertices que tem peso
+    :param iter_max:
+        Numero máximo de iterações o padrão é 100
 
+    :return:
+        tree: igraph.graph
+            tree sem vertices de stainer de grau1
+        edges_list: list
+            lista de arestas com NOMES (u,v)
+    """
+
+    for item in list(range(0, iter_max)):
+
+        vert_grau1 = [index for index, item in enumerate(tree.vs.degree()) if item == 1]  # pega o index dos vertices de grau1
+
+        tree_vertices = tree.get_vertex_dataframe()  # dataframe de vertices
+
+        name_grau1 = tree_vertices.loc[vert_grau1, ['name']]  # seleciona os vertices de grau 1 em tree_vertices
+
+        name_grau1 = name_grau1.loc[~name_grau1['name'].isin(terminais)]  # verifica os vertices de grau 1 que nao sao terminais
+
+        v_retirar = name_grau1.index.to_list()  # pega lista index dos vertices de grau 1 para retirar
+
+        # se tiver vertices para retirar retire se nao para o laço
+        if v_retirar:
+            tree.delete_vertices(v_retirar.to_list())
+
+        else:
+            break
+
+
+    V_tree = tree.get_vertex_dataframe().copy()  # dataframe com vertices de aux_G
+
+    V_guide = V_tree['name'].to_dict()  # dicionário com {index do vertice em aux_G: Nome do vertice em aux_G}
+
+    tree_edges = tree.get_edge_dataframe().copy()  # dataframe com arestas de aux_G
+    tree_edges['source'].replace(V_guide, inplace=True)  # Substitui o valor de source (que e index) para NOME
+    tree_edges['target'].replace(V_guide, inplace=True)  # Substitui o valor de target (que e index) para NOME
+
+    tree_edges['edge_name'] = tree_edges[['source', 'target']].apply(tuple, axis=1)  # Cria coluna com as tuplas (source, target)
+
+    edges_list = tree_edges['edge_name'].to_list()  # Lista de tuplas com as arestas
+
+    return tree, edges_list
+
+
+def vert_premios(G):
+    """
+    Retorna lista de vertices com premios.
+    :param G: igraph.Graph
+    :return: list
+
+    """
+    g_vertices = G.get_vertex_dataframe()
+    v_premios = g_vertices.loc[g_vertices['penalties'] != 0, 'name'].to_list()
+
+    return v_premios
 
 if __name__ == "__main__":
     arq = "K100.1"
