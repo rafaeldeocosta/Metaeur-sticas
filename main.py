@@ -28,7 +28,7 @@ if __name__ == "__main__":
     # layout = T.layout("lgl")
     # plot(T, layout=layout)
 
-    T_terminais = kruskal(G_terminais, E_terminais, edge_costs_terminais)
+    T_terminais, T_terminais_edges_list = kruskal(G_terminais, E_terminais, edge_costs_terminais)
     print(T_terminais.is_tree())
 
     T_terminais.vs["label"] = T_terminais.vs["name"]
