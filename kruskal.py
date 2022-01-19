@@ -134,6 +134,18 @@ def kruskal(G, E, edge_costs):
 
     T = F[0]
 
-    T = get_atributes(G_ori, T)
+    T = get_atributes(G_ori, T)  # Atribui os atributos de vertice e arestas a T
 
-    return T
+    V_t = T.get_vertex_dataframe().copy()  # dataframe com vertices de aux_G
+
+    V_guide = V_t['name'].to_dict()  # dicionário com {index do vertice em aux_G: Nome do vertice em aux_G}
+
+    T_edges = T.get_edge_dataframe().copy()  # dataframe com arestas de aux_G
+    T_edges['source'].replace(V_guide, inplace=True)  # Substitui o valor de source (que e index) para NOME
+    T_edges['target'].replace(V_guide, inplace=True)  # Substitui o valor de target (que e index) para NOME
+
+    T_edges['edge_name'] = T_edges[['source', 'target']].apply(tuple, axis=1)  # Cria coluna com as tuplas (source, target)
+
+    edges_list = T_edges['edge_name'].to_list()
+
+    return T, edges_list

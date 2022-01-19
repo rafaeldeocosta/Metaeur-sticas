@@ -21,7 +21,7 @@ if __name__ == "__main__":
     # G_terminais.vs["label"] = G_terminais.vs["name"]
     # plot(G_terminais)
 
-    T = kruskal(G, E, edge_costs)
+    T, T_edges_list = kruskal(G, E, edge_costs)
 
     # plot graph
     # T.vs["label"] = T.vs["name"]
@@ -29,6 +29,7 @@ if __name__ == "__main__":
     # plot(T, layout=layout)
 
     T_terminais = kruskal(G_terminais, E_terminais, edge_costs_terminais)
+    print(T_terminais.is_tree())
 
     T_terminais.vs["label"] = T_terminais.vs["name"]
     layout = T_terminais.layout("lgl")
