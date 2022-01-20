@@ -232,7 +232,7 @@ def tira_grau1(tree, terminais, iter_max=100):
 
         # se tiver vertices para retirar retire se nao para o laço
         if v_retirar:
-            tree.delete_vertices(v_retirar.to_list())
+            tree.delete_vertices(v_retirar)
 
         else:
             break
