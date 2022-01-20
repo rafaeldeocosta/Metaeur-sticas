@@ -265,6 +265,52 @@ def vert_premios(G):
 
     return v_premios
 
+
+def remove_costly_leafs(T):
+    """
+        função que remove os vértices folha do grafo cujo prize é menor que
+            o custo da aresta para conectá-lo
+
+            Args:
+                T - igraph.Graph - Tree
+                T_terminais_edges_list - list of edges [(i,j),...]
+
+            Return:
+                Pruned_T - igraph.Graph - Tree without costly leafs
+
+    """
+
+    Pruned_T = T.copy()
+
+    while True:
+        # select leafs, i.e. vertices with degree = 1
+        leafs_vertices = []
+        for v in Pruned_T.vs:
+            if v.degree() == 1:
+                leafs_vertices.append(v)
+
+        vertices_to_remove = []
+        for v in leafs_vertices:
+            # print("vertice %s" % v["name"])
+            # print(v)
+            for e in v.all_edges():
+                # print(e)
+                # print(Pruned_T.vs[e.source]["name"])
+                # print(Pruned_T.vs[e.target]["name"])
+
+                if v["penalties"] < e["cost"]:
+                    # print("removo")
+                    vertices_to_remove.append(v)
+
+        if len(vertices_to_remove) == 0:
+            break
+        else:
+            # removing vertices from vertices_to_remove and all its edges
+            Pruned_T.delete_vertices(vertices_to_remove)
+
+    return Pruned_T
+
+
 if __name__ == "__main__":
     arq = "K100.1"
     G, V, vertex_penalties, E, edge_costs = create_graph_from(arq)

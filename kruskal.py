@@ -14,6 +14,10 @@ def kruskal(G, E, edge_costs):
             E   - dict - edges
             edge_costs  - dict - cost of edges
 
+        Return:
+            T - igraph.Graph - árvore geradora mínima
+            edges_list -
+
     """
     G_ori = G.copy()  # G without alterations
 
@@ -105,8 +109,6 @@ def kruskal(G, E, edge_costs):
                 new_t.add_vertex(w["name"])
             for w in t_v.vs:
                 new_t.add_vertex(w["name"])
-
-            # TODO: Temos que pegar o NOME dos vertíces das arestas em T_U e T_V, e fazer find no new_t
 
             for l in t_u.es:
                 source_vertex = t_u.vs[l.source]["name"]
