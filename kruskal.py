@@ -47,8 +47,8 @@ def kruskal(G, E, edge_costs):
         edge_index_list.remove(e_index) # removing e_index  from edge_index_list
         S.pop(e_index)                  # removing e_index  from S
 
-        print("Number of tree in F %s" % len(F))
-        print("Number of edges in S %s" % len(S))
+        # print("Number of tree in F %s" % len(F))
+        # print("Number of edges in S %s" % len(S))
 
         # search trees in the forest F where vertices u and v are
         u = e[0]

@@ -1,5 +1,6 @@
 from igraph import Graph
 from math import inf
+from random import randint
 
 def dijkstra(G, source):
     """
@@ -89,9 +90,9 @@ if __name__ == "__main__":
     e["cost"] = [2]
 
     # B - C
-    G.add_edge(G.vs.find(name="b"),G.vs.find(name="c"))
-    e = G.es.select(_source="b", _target="c")
-    e["cost"] = [4]
+    # G.add_edge(G.vs.find(name="b"),G.vs.find(name="c"))
+    # e = G.es.select(_source="b", _target="c")
+    # e["cost"] = [4]
 
     # B - D
     G.add_edge(G.vs.find(name="b"),G.vs.find(name="d"))
@@ -99,9 +100,9 @@ if __name__ == "__main__":
     e["cost"] = [2]
 
     # C - D
-    G.add_edge(G.vs.find(name="c"),G.vs.find(name="d"))
-    e = G.es.select(_source="c", _target="d")
-    e["cost"] = [1]
+    # G.add_edge(G.vs.find(name="c"),G.vs.find(name="d"))
+    # e = G.es.select(_source="c", _target="d")
+    # e["cost"] = [1]
 
     # C - G
     G.add_edge(G.vs.find(name="c"),G.vs.find(name="g"))
@@ -114,20 +115,40 @@ if __name__ == "__main__":
     e["cost"] = [2]
 
     # D - F
-    G.add_edge(G.vs.find(name="d"),G.vs.find(name="f"))
-    e = G.es.select(_source="d", _target="f")
-    e["cost"] = [2]
+    # G.add_edge(G.vs.find(name="d"),G.vs.find(name="f"))
+    # e = G.es.select(_source="d", _target="f")
+    # e["cost"] = [2]
 
     # E - F
-    G.add_edge(G.vs.find(name="e"),G.vs.find(name="f"))
-    e = G.es.select(_source="e", _target="f")
-    e["cost"] = [3]
+    # G.add_edge(G.vs.find(name="e"),G.vs.find(name="f"))
+    # e = G.es.select(_source="e", _target="f")
+    # e["cost"] = [3]
 
     # F - G
     G.add_edge(G.vs.find(name="f"),G.vs.find(name="g"))
     e = G.es.select(_source="f", _target="g")
     e["cost"] = [3]
 
+    # dist = dijkstra(G, "a")
+    # print(dist)
+    # c = G.clusters()
+    # print(len(c))
+    # s1 = c.subgraph(0)
+    # print(type(s1))
+    # print(c[0].subgraph())
+    # print(c[1].subgraph())
 
-    dist = dijkstra(G, "a")
-    print(dist)
+    print(G.get_vertex_dataframe())
+    u = G.vs[randint(0, len(G.vs) - 1)]
+    v = G.vs[randint(0, len(G.vs) - 1)]
+    print(u["name"])
+    print(v["name"])
+
+    P = G.get_all_shortest_paths(G.vs.find(name=u["name"]),
+                            to=G.vs.find(name=v["name"]))
+
+    print(P)
+    print(len(G.es.select(_source=u["name"], _target=v["name"])))
+    # print(e[0])
+    # print(e[0].source)
+    # print(e[0].target)

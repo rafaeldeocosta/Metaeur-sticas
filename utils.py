@@ -311,6 +311,26 @@ def remove_costly_leafs(T):
     return Pruned_T
 
 
+def get_solution_list(E, T):
+    print(E)
+    S = [0] * len(E.keys())
+    print(S)
+
+    for e in T.es:
+        link = (T.vs[e.source]["name"],T.vs[e.target]["name"])
+        print("link")
+        print(link)
+
+        print("values of E")
+        for (k, v) in E.items():
+            print(v)
+            if link in v:
+                print(k)
+                exit()
+
+    return S
+
+
 if __name__ == "__main__":
     arq = "K100.1"
     G, V, vertex_penalties, E, edge_costs = create_graph_from(arq)
