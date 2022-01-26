@@ -1,3 +1,4 @@
+from copy   import deepcopy
 from random import randint
 from igraph import plot
 from utils import calc_pontuacao
@@ -14,16 +15,20 @@ def get_neighbor(G, S):
                 S - igraph.Graph - Tree
     """
 
+    #
+    # Plot S
+    #
+    # S.vs["label"] = S.vs["name"]
+    # layout = S.layout("lgl")
+    # plot(S, layout=layout)
+
     S_ = S.copy()
 
-    # S_.vs["label"] = S_.vs["name"]
-    # layout = S_.layout("lgl")
-    # plot(S_, layout=layout)
+    #
+    # First Step: Ramdonly choose number of edges to modify in S
+    #
 
-
-    # escolhe aleatoriamente a quantidade de arestas modificadas da arvore
-    #   pra remover
-    number_of_edges_to_change = randint(1, len(S_.es))  #TODO: mudar
+    # number_of_edges_to_change = randint(1, len(S_.es))  #TODO: mudar
     number_of_edges_to_change = 1
     # print("number_of_edges_to_change %s " % number_of_edges_to_change)
 
@@ -33,46 +38,61 @@ def get_neighbor(G, S):
 
     n_e = 1
     while n_e <= number_of_edges_to_change:
-        # escolhe aleatoriamente vertices u e v das arvores geradas
-        #   pela remoção da aresta
 
+        #
+        #   Step #2: Ramdonly choose an edge to remove
+        #
         e_to_remove = S_.es[randint(0, len(S_.es) - 1)]
         # print(e_to_remove)
         S_.delete_edges(e_to_remove)
 
-        # selecting generated trees after removing an edge
-
+        #
+        # Step #3: Select trees generated after removing such edge
+        #
         clusters = S_.clusters()
         if len(clusters) == 2:
             t_u = clusters.subgraph(0)
             t_v = clusters.subgraph(1)
         else:
-            print("there is no two tree after removing an edge")
+            print("there is no two trees after removing an edge")
+            # print("removing %s -- %s " % (G.vs[e_to_remove.source]["name"], G.vs[e_to_remove.target]["name"]))
+            # print(S_)
+            #
+            # S_.vs["label"] = S_.vs["name"]
+            # layout = S_.layout("lgl")
+            # plot(S_, layout=layout)
+            # exit()
 
-        # escolhe os vertices u e v das duas arvores criadas após a
-        #   remoção da aresta acima
 
+        #
+        # Step #4: ramdonly choose vertice u from t_u and v from t_v
+        #
         u = t_u.vs[randint(0, len(t_u.vs) - 1)]["name"]
         v = t_v.vs[randint(0, len(t_v.vs) - 1)]["name"]
 
         # print("u = %s" % u)
         # print("v = %s" % v)
 
-        # roda dijkstra entre u e v (se não me engano, o dijkstra
-        #   retorna varios caminhos)
-
+        #
+        # Step #5: Get in the original Graph (G) all paths that connects u and v
+        #
         P = G.get_all_shortest_paths(G.vs.find(name=u), to=G.vs.find(name=v))
-
         if len(P) == 0:
+            S_ = S.copy()
             continue
 
-        # escolhe aleatorio dentre os caminhos de dijkstra
-
+        #
+        # Step #6: ramdonly choose one path from P
+        #
         p = P[randint(0, len(P)-1)] # list of vertex_id of G
         # print("caminho escolhido")
         # print(p)
         # for x in p:
         #     print(G.vs[x])
+
+        #
+        # Step #7: Trying to reconnect the tree S_ using p
+        #
 
         # tenta reconectar S_ (as arvores t_u e t_v)
         # se não gerar ciclo, aceita como vizinho
@@ -88,46 +108,79 @@ def get_neighbor(G, S):
         # layout = t_v.layout("lgl")
         # plot(t_v, layout=layout)
 
-        s = u
+        s = deepcopy(u)
         for t in p:
-            if G.vs[t]["name"] == s:
+            vertex_t_in_G = G.vs[t]["name"]
+
+
+
+            if  s == vertex_t_in_G:
+                # discarding the first element of p because it is u
                 continue
 
             else:
+
+                #
+                # Step #8: Checking if vertices s and t are in S_
+                #               since t is a vertice name in G and may not
+                #               exist in S_ yet
+
+                # getting vertice name of vertex id t in G
                 if len(S_.vs.select(name=s)) == 0:
                     S_.add_vertex(name=s)
-                    s_s = S_.vs.find(name=s)
-                    if s_s['penalties'] is None:
-                        s_s['penalties'] = G.vs.find(name=s)['penalties']
+                    vertex_s = S_.vs.find(name=s)
+                    if vertex_s['penalties'] is None:
+                        vertex_s['penalties'] = G.vs.find(name=s)['penalties']
 
+                elif len(S_.vs.select(name=vertex_t_in_G)) == 0:
 
-                elif len(S_.vs.select(name=G.vs[t]["name"])) == 0:
-                    S_.add_vertex(name=G.vs[t]["name"])
-                    s_t = S_.vs.find(name=G.vs[t]["name"])
+                    S_.add_vertex(name=vertex_t_in_G)
+                    vertex_t = S_.vs.find(name=vertex_t_in_G)
 
-                    if s_t['penalties'] is None:
-                        s_t['penalties'] = G.vs.find(name=G.vs[t]["name"])['penalties']
+                    if vertex_t['penalties'] is None:
+                        vertex_t['penalties'] = \
+                            G.vs.find(name=vertex_t_in_G)['penalties']
 
-
-
-                # Before add edge, check if the edge between s and t exist
+                #
+                # Step #9: Before add the edge s --t , check if the edge
+                #           between s and t already exist
+                #
                 if len(S_.es.select(_source=S_.vs.find(name=s),
-                                    _target=S_.vs.find(name=G.vs[t]["name"]))) == 0 and \
-                   len(S_.es.select(_source=S_.vs.find(name=G.vs[t]["name"]),
+                                    _target=S_.vs.find(name=vertex_t_in_G))) == 0 and \
+                   len(S_.es.select(_source=S_.vs.find(name=vertex_t_in_G),
                                     _target=S_.vs.find(name=s))) == 0:
 
                     S_.add_edges([(S_.vs.find(name=s),
-                                    S_.vs.find(name=G.vs[t]["name"]))])
+                                    S_.vs.find(name=vertex_t_in_G))])
 
 
-                    e = S_.es.select(_source=S_.vs.find(name=s),
-                                    _target=S_.vs.find(name=G.vs[t]["name"]))
-                    e_g = G.es.select(_source=G.vs.find(name=s),
-                                    _target=G.vs.find(name=G.vs[t]["name"]))
+                    e_in_S_ = S_.es.select(_source=S_.vs.find(name=s),
+                                    _target=S_.vs.find(name=vertex_t_in_G))
 
-                    e['cost'] = e_g[0]['cost']
 
-                s = G.vs[t]["name"]
+
+                    e_in_G = G.es.select(_source=G.vs.find(name=s),
+                                    _target=G.vs.find(name=vertex_t_in_G))
+
+                    # Updating cost of new edge in S_
+                    if len(e_in_G) == 0:
+                        print("edge does not exist in G")
+                    else:
+                        e_in_S_['cost'] = e_in_G[0]['cost']
+
+                else:
+                    s = deepcopy(vertex_t_in_G)
+                    continue
+
+
+            s = deepcopy(vertex_t_in_G)
+
+
+        #
+        # Step 10: S_ after reconnection should be a tree.
+        #
+        if not S_.is_tree():
+            S_ = S.copy()
 
         # print("=== S_ after ===")
         # print(S_)
@@ -161,7 +214,7 @@ def metropolis(G, S_ini, Temperature, n_iter_temperature):
 
     """
 
-    print("Running metropolis for Temperature %s" % Temperature)
+    print("Running metropolis for temperature %s" % Temperature)
 
     Best_S = S_ini
 
@@ -176,8 +229,14 @@ def metropolis(G, S_ini, Temperature, n_iter_temperature):
         else:
             DELTA =  calc_pontuacao(G, S_viz) - calc_pontuacao(G, Best_S)
             p = uniform(0,1)
-            if p < (1 / exp(DELTA/Temperature)):
-                Best_S = S_viz
+            # print("p = %s" % p)
+            # print("Temperature = %s" % Temperature)
+            # print("DELTA = %s" % DELTA)
+            # print("e = %s" % exp(DELTA/Temperature))
+            if  exp(DELTA/Temperature) > 0:
+                if p < (1 / exp(DELTA/Temperature)):
+                    Best_S = S_viz
+
         i += 1
 
     return Best_S

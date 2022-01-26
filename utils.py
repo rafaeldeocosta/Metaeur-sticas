@@ -61,6 +61,7 @@ def create_graph_from(f):
         v = e[1]
         G.add_edge(G.vs.find(name=u), G.vs.find(name=v))
 
+    # Updating G with cost of edges and penalties of vertices
     G.es['cost'] = list(edge_costs.values())
     G.vs['penalties'] = list(vertex_penalties.values())
 
@@ -70,22 +71,27 @@ def create_graph_from(f):
 def select_sub_graph(G, vertices):
 
     """
-    Função retorna um sub grafo com os mínimos caminhos entre os vértices da lista "vertices"
-    :param G: igraph.Graph
-        Grafo principal, onde o custo das arestas está no atributo nomeado de "cost" e as penalidades dos véritces em
-        "penalties"
-    :param vertices: list
-        Lista de NOMES de vertices
-    :return:
-        G: igraph.Graph
-            Subgrafo de G com vértices da lista "vertices"
-        E_aux: dict
-            Dicionario com {index da arestas: (u, v)} > u, v = nomes dos vértices source e target
-        edges_cost_aux: dict
-            Dicionario com {index arestas: cost aresta}
+        Função que retorna um subgrafo com os mínimos caminhos entre os
+            vértices da lista "vertices"
+
+        :param G: igraph.Graph
+            Grafo principal, onde o custo das arestas está no atributo "cost" e
+                as penalidades dos véritces em "penalties"
+        :param vertices: list
+            Lista de NOMES de vertices
+
+        :return:
+            aux_G: igraph.Graph
+                Subgrafo de G com vértices da lista "vertices"
+            E_aux: dict
+                Dicionario com {index da arestas: (u, v)} onde u e v são nomes
+                    dos vértices source e target
+            edges_cost_aux: dict
+                Dicionario com {index arestas: cost aresta}
     """
 
-    combi_V = list(it.combinations(vertices, 2))  # combinacao 2 a 2 dos itens na lista de vertices
+    # combinacao 2 a 2 dos itens na lista de vertices
+    combi_V = list(it.combinations(vertices, 2))
 
     verts_G = G.get_vertex_dataframe().copy()
 
@@ -97,7 +103,10 @@ def select_sub_graph(G, vertices):
         source = item[0]
         destination = item[1]
 
-        minimal_path = G.get_shortest_paths(G.vs.find(name=source), G.vs.find(name=destination), weights='cost')[0]  #retorna os indexes dos vértices do menor caminho
+        # retorna os indexes dos vértices do menor caminho
+        minimal_path = G.get_shortest_paths(G.vs.find(name=source),
+                                            G.vs.find(name=destination),
+                                            weights='cost')[0]
 
         for id, vert in enumerate(minimal_path[:-1]):
 
@@ -109,12 +118,14 @@ def select_sub_graph(G, vertices):
 
             if u not in aux_G.vs['name']:
 
-                # aux_G.add_vertex(u)
-                penalty_u = verts_G.loc[verts_G['name'] == u, 'penalties'].values[0]  # penalidade de u
-                aux_G.add_vertices([u], attributes={'penalties': [penalty_u]})  # dessa maneira a penalidade já entra no G
+                # penalidade de u
+                penalty_u = verts_G.loc[verts_G['name'] == u,
+                                                'penalties'].values[0]
+
+                # dessa maneira a penalidade já entra no G
+                aux_G.add_vertices([u], attributes={'penalties': [penalty_u]})
 
             if v not in aux_G.vs['name']:
-
                 # aux_G.add_vertex(v)
                 penalty_v = verts_G.loc[verts_G['name'] == v, 'penalties'].values[0]  # penalidade de v
                 aux_G.add_vertices([v], attributes={'penalties': [penalty_v]})  # dessa maneira a penalidade já entra no G
@@ -329,6 +340,11 @@ def get_solution_list(E, T):
                 exit()
 
     return S
+
+
+def get_graph_of_terminals():
+    return
+
 
 
 if __name__ == "__main__":

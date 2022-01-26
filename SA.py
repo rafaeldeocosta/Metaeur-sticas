@@ -15,7 +15,7 @@ def SA(G, Temp_ini, Temp_fin, ALPHA, S_ini, SA_MAX):
         Returns
 
     """
-    print("running SA ...")
+    print("Starting SA ...")
 
     # print(Temp_ini)
     # print(Temp_fin)
