@@ -34,12 +34,13 @@ def kruskal(G, E, edge_costs):
     # sorting edge_costs
     edge_costs = dict(sorted(edge_costs.items(), key=lambda item: item[1]))
 
-    # creating and index list of edges sorted by their costs
+    # creating a list of edge_index sorted by their costs
     edge_index_list = list(edge_costs.keys())
 
     while S:
-
-        # Removing an edge with minimum cost
+        #
+        # Step #1: Removing an edge with minimum cost
+        #
         e_index = edge_index_list[0]    # select index of edge with minimum cost
         e = S[e_index]                  # get the edge with e_index: (vi, vj)
         c_e = edge_costs[e_index]       # cost of edge e
@@ -47,18 +48,22 @@ def kruskal(G, E, edge_costs):
         edge_index_list.remove(e_index) # removing e_index  from edge_index_list
         S.pop(e_index)                  # removing e_index  from S
 
-        # print("Number of tree in F %s" % len(F))
-        # print("Number of edges in S %s" % len(S))
 
-        # search trees in the forest F where vertices u and v are
+        #
+        # Step #2: Selecting vertices u and v of edge e
+        #
         u = e[0]
         v = e[1]
 
-        t_u = None  # tree in F where the vertex u is
-        t_v = None  # tree in F where the vertex v is
+        #
+        # Step #3: search trees in the forest F that contains vertices u and v
+        #
+
+        t_u = None  # tree in F that contain u (igraph.Graph)
+        t_v = None  # tree in F that contain v (igraph.Graph)
 
 
-        # Find out trees that belong to vertex u and v
+        # Check trees t in F that contains vertices u and v
         for t in F:
             for w in t.vs:  # w is a vertex in the tree t
                 if w["name"] == u:
@@ -70,14 +75,19 @@ def kruskal(G, E, edge_costs):
         if t_u == t_v:
             continue
 
-        # Since the edge e  connects two different trees, add it to F,
-        # merge them, if they remain a tree
+        #
+        #   Step #4: Connect t_u and t_v and update forest F
+        #
+        #   Since edge e has vertices of different trees, try to merge them,
+        #   but if the merged tree stop being a tree, discard such edge
+        #
 
         #
-        # check edges of t_u and t_v to create new tree
+        #   check edges of t_u and t_v to create new tree
         #
 
-        # If t_u and t_v dont have edges, create a new tree
+        # If t_u and t_v dont have edges, create a new tree with u and v
+        # and an edge between them
         if len(t_u.es) == 0 and len(t_v.es) == 0:
             new_t = Graph()
             new_t.add_vertex(u)
@@ -88,20 +98,22 @@ def kruskal(G, E, edge_costs):
             F.remove(t_u)
             F.remove(t_v)
 
-        # If only t_v has edges, insert u in t_v
+        # If only t_v has edges, updated t_v with vertice u and create edge e
+        # in t_v
         elif len(t_u.es) == 0 and len(t_v.es) > 0:  # update t_v with u
             t_v.add_vertex(u)
             t_v.add_edge(t_v.vs.find(name=u), t_v.vs.find(name=v))
             F.remove(t_u)
 
-        # If only t_u has edges, insert v in t_u
+        # If only t_u has edges, updated t_u with vertice v and create edge e
+        # in t_u
         elif len(t_u.es) > 0 and len(t_v.es) == 0: # update t_u with v
             t_u.add_vertex(v)
             t_u.add_edge(t_u.vs.find(name=u), t_u.vs.find(name=v))
             F.remove(t_v)
 
         # Since t_u and t_v have edges, it requires to create a new tree (new_t)
-        # with all vertices and edges of t_u and t_v
+        # with all vertices and edges of t_u and t_v. Thus create edge e
         else:
 
             new_t = Graph()
@@ -123,10 +135,9 @@ def kruskal(G, E, edge_costs):
                     new_t.vs.find(name=target_vertex))
 
             # inserting the edge e that links t_u and t_v
-            # print("ligando t_u e t_v com a aresta %s -> %s " % (u,v))
             new_t.add_edge(new_t.vs.find(name=u), new_t.vs.find(name=v))
 
-            # check if new_t remain a tree
+            # check if new_t not remain a tree; discard new_t and edge e
             if not new_t.is_tree():
                 continue
             else:
@@ -134,6 +145,7 @@ def kruskal(G, E, edge_costs):
                 F.remove(t_u)
                 F.remove(t_v)
 
+    # In the end, it is expected that Forest F contains only one tree 
     T = F[0]
 
     T = get_atributes(G_ori, T)  # Atribui os atributos de vertice e arestas a T
