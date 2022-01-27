@@ -4,6 +4,7 @@ from igraph import plot
 from utils import calc_pontuacao
 from random import uniform
 from math import exp
+from math import inf
 
 def get_neighbor(G, S):
     """
@@ -217,8 +218,15 @@ def metropolis(G, S_ini, Temperature, n_iter_temperature):
             # print("Temperature = %s" % Temperature)
             # print("DELTA = %s" % DELTA)
             # print("e = %s" % exp(DELTA/Temperature))
-            if  exp(DELTA/Temperature) > 0:
+
+            try:
+                ans = exp(DELTA/Temperature)
+            except OverflowError:
+                ans = inf
+
+            if ans > 0 and ans != inf:
                 if p < (1 / exp(DELTA/Temperature)):
                     Best_S = S_viz.copy()
+
 
     return Best_S
