@@ -36,15 +36,16 @@ def get_neighbor(G, S):
     # print(S_.get_edge_dataframe())
     # print(S_)
 
-    n_e = 1
-    while n_e <= number_of_edges_to_change:
-
+    G_orig = G.copy()
+    for n_e in range(0,number_of_edges_to_change) :
+        G = G_orig.copy()
         #
         #   Step #2: Ramdonly choose an edge to remove
         #
         e_to_remove = S_.es[randint(0, len(S_.es) - 1)]
         # print(e_to_remove)
         S_.delete_edges(e_to_remove)
+        G.delete_edges(e_to_remove)
 
         #
         # Step #3: Select trees generated after removing such edge
@@ -55,14 +56,6 @@ def get_neighbor(G, S):
             t_v = clusters.subgraph(1)
         else:
             print("there is no two trees after removing an edge")
-            # print("removing %s -- %s " % (G.vs[e_to_remove.source]["name"], G.vs[e_to_remove.target]["name"]))
-            # print(S_)
-            #
-            # S_.vs["label"] = S_.vs["name"]
-            # layout = S_.layout("lgl")
-            # plot(S_, layout=layout)
-            # exit()
-
 
         #
         # Step #4: ramdonly choose vertice u from t_u and v from t_v
@@ -76,7 +69,8 @@ def get_neighbor(G, S):
         #
         # Step #5: Get in the original Graph (G) all paths that connects u and v
         #
-        P = G.get_all_shortest_paths(G.vs.find(name=u), to=G.vs.find(name=v))
+        P = G.get_all_shortest_paths(G.vs.find(name=u),
+                                        to=G.vs.find(name=v))
         if len(P) == 0:
             S_ = S.copy()
             continue
@@ -112,8 +106,6 @@ def get_neighbor(G, S):
         for t in p:
             vertex_t_in_G = G.vs[t]["name"]
 
-
-
             if  s == vertex_t_in_G:
                 # discarding the first element of p because it is u
                 continue
@@ -129,11 +121,11 @@ def get_neighbor(G, S):
                 if len(S_.vs.select(name=s)) == 0:
                     S_.add_vertex(name=s)
                     vertex_s = S_.vs.find(name=s)
+
                     if vertex_s['penalties'] is None:
                         vertex_s['penalties'] = G.vs.find(name=s)['penalties']
 
                 elif len(S_.vs.select(name=vertex_t_in_G)) == 0:
-
                     S_.add_vertex(name=vertex_t_in_G)
                     vertex_t = S_.vs.find(name=vertex_t_in_G)
 
@@ -157,8 +149,6 @@ def get_neighbor(G, S):
                     e_in_S_ = S_.es.select(_source=S_.vs.find(name=s),
                                     _target=S_.vs.find(name=vertex_t_in_G))
 
-
-
                     e_in_G = G.es.select(_source=G.vs.find(name=s),
                                     _target=G.vs.find(name=vertex_t_in_G))
 
@@ -175,7 +165,6 @@ def get_neighbor(G, S):
 
             s = deepcopy(vertex_t_in_G)
 
-
         #
         # Step 10: S_ after reconnection should be a tree.
         #
@@ -190,10 +179,6 @@ def get_neighbor(G, S):
         # S_.vs["label"] = S_.vs["name"]
         # layout = S_.layout("lgl")
         # plot(S_, layout=layout)
-
-        # senão, volta e escolhe outro caminho de dijkstra
-
-        n_e += 1
 
     return S_
 
@@ -216,16 +201,15 @@ def metropolis(G, S_ini, Temperature, n_iter_temperature):
 
     print("Running metropolis for temperature %s" % Temperature)
 
-    Best_S = S_ini
+    Best_S = S_ini.copy()
 
-    i = 1
-    while i < n_iter_temperature:
+    for i in range(0, n_iter_temperature):
 
         # GERAR um vizinho s de forma aleatória na vizinhança ℵ𝑠
         S_viz = get_neighbor(G, Best_S)
 
-        if calc_pontuacao(G, Best_S) < calc_pontuacao(G, S_viz):
-            Best_S = S_viz
+        if  calc_pontuacao(G, S_viz) < calc_pontuacao(G, Best_S):
+            Best_S = S_viz.copy()
         else:
             DELTA =  calc_pontuacao(G, S_viz) - calc_pontuacao(G, Best_S)
             p = uniform(0,1)
@@ -235,8 +219,6 @@ def metropolis(G, S_ini, Temperature, n_iter_temperature):
             # print("e = %s" % exp(DELTA/Temperature))
             if  exp(DELTA/Temperature) > 0:
                 if p < (1 / exp(DELTA/Temperature)):
-                    Best_S = S_viz
-
-        i += 1
+                    Best_S = S_viz.copy()
 
     return Best_S

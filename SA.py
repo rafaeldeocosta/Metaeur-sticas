@@ -24,16 +24,19 @@ def SA(G, Temp_ini, Temp_fin, ALPHA, S_ini, SA_MAX):
     # print(SA_MAX)
 
     Temp_curr = Temp_ini
-    Star_S = S_ini
+    Star_S = S_ini.copy()
+    New_S = S_ini.copy()
 
     while(Temp_curr > Temp_fin):
 
-        New_S = metropolis(G, S_ini, Temp_curr, SA_MAX)
+        Best_S = metropolis(G, New_S, Temp_curr, SA_MAX)
 
-        if calc_pontuacao(G, New_S) < calc_pontuacao(G, Star_S):
-            Star_S = New_S
+        if calc_pontuacao(G, Best_S) < calc_pontuacao(G, Star_S):
+            Star_S = Best_S.copy()
 
+        New_S = Best_S.copy()
 
+        # Cooling strategy
         Temp_curr = Temp_curr * ALPHA
 
     return Star_S

@@ -129,6 +129,13 @@ if __name__ == "__main__":
     e = G.es.select(_source="f", _target="g")
     e["cost"] = [3]
 
+
+    u = G.vs.find(name="a")
+    v = G.vs.find(name="d")
+    p = G.get_all_shortest_paths(u, to=v)
+    print(G.get_vertex_dataframe())
+    print(p)
+
     # dist = dijkstra(G, "a")
     # print(dist)
     # c = G.clusters()

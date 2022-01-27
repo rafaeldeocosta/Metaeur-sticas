@@ -39,7 +39,7 @@ if __name__ == "__main__":
     # T: Tree obtained from G, which could be used as Initial Solution of SA
     #       (igraph.Graph)
     # T_edges_list:
-    T, T_edges_list = kruskal(G, E, edge_costs)
+    # T, T_edges_list = kruskal(G, E, edge_costs)
     #
     # Plot T
     #
@@ -47,8 +47,8 @@ if __name__ == "__main__":
     # layout = T.layout("lgl")
     # plot(T, layout=layout)
     #
-    sol_T = calc_pontuacao(G, T)
-    print("Score of T %s" % sol_T)
+    # sol_T = calc_pontuacao(G, T)
+    # print("Score of T %s" % sol_T)
 
     # Pruned_T = remove_costly_leafs(T)
     #
@@ -77,11 +77,8 @@ if __name__ == "__main__":
     T_terminais, T_terminais_edges_list = \
         kruskal(G_terminais, E_terminais, edge_costs_terminais)
 
-
-    # T_terminais, T_terminais_edges_list = tira_grau1(T_terminais, terminais)
-
-    # sol_T_terminais = calc_pontuacao(G, T_terminais)
-    # print("Score of T_Terminais %s" % sol_T_terminais)
+    sol_T_terminais = calc_pontuacao(G, T_terminais)
+    print("Score of T_Terminais %s" % sol_T_terminais)
 
     #
     # Plot T_Terminais
@@ -90,22 +87,20 @@ if __name__ == "__main__":
     # layout = T_terminais.layout("lgl")
     # plot(T_terminais, layout=layout)
 
-
-    # Pruned_T_Terminais = remove_costly_leafs(T_terminais)
-    # sol_Pruned_T_terminais = calc_pontuacao(G, Pruned_T_Terminais)
-    # print("Score of Pruned_T_Terminais %s" % sol_Pruned_T_terminais)
+    Pruned_T_Terminais = remove_costly_leafs(T_terminais)
+    sol_Pruned_T_terminais = calc_pontuacao(G, Pruned_T_Terminais)
+    print("Score of Pruned_T_Terminais %s" % sol_Pruned_T_terminais)
 
     #
     # Run Simulated Annealing
     #
 
     #TODO: get params from file called 'cooling_strategies'
-    # S = Pruned_T_Terminais.copy()
-    S = T.copy()
-    Temp_ini = 100
-    Temp_fin =  0
-    ALPHA = 0.5
-    SA_MAX = 10
+    S = Pruned_T_Terminais.copy()
+    Temp_ini = 1000
+    Temp_fin =  1
+    ALPHA = 0.9
+    SA_MAX = 100
 
 
     Star_S = SA(G, Temp_ini, Temp_fin, ALPHA, S, SA_MAX)
