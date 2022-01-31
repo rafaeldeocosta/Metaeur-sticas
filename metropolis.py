@@ -9,18 +9,19 @@ from math import inf
 
 import igraph as ig
 
-def get_neighbor(G, S, T_curr, Temp_ini,points=[1, 1, 1]):
+
+def get_neighbor(G, S, T_curr, Temp_ini, points):
 
     # Step  # 1: Choose which method to use
-    methods = ['remove_vertices' for item in range(0, points[0])] + \
-              ['remove_edges' for item in range(0, points[1])] + \
+    methods = ['remove_edges' for item in range(0, points[0])] + \
+              ['remove_vertices' for item in range(0, points[1])] + \
               ['both' for item in range(0, points[2])]
 
     process = choice(methods)
 
     # Step  # 2: Choose the number of changes
     # TODO: NUMERO DE MOFICAÇÕES PROPORCIONAL A TEMPERATURA
-    max_changes = round(len(S.vs)*(T_curr/Temp_ini))
+    max_changes = round(len(S.vs) * (T_curr/Temp_ini))
     max_changes = max_changes if max_changes > 1 else 1
 
     n_changes = choice(list(range(1, max_changes+1)))
@@ -56,8 +57,8 @@ def get_neighbor(G, S, T_curr, Temp_ini,points=[1, 1, 1]):
     return S_, process
 
 
-def join_forest(G, S_):
-
+#TODO: new parameters: removed_vertices and removed_edges
+def join_forest(G, S_, removed_vertices=None, removed_edges=None):
     """
         Function that returns a single tree made from a forest.
 
@@ -65,12 +66,21 @@ def join_forest(G, S_):
         The original Graph.
     :param S_: igraph.Graph
         A forest.
+
+    :param removed_vertices: list of removed vertices obtained from an  earlier
+                                function: remove_edges() or remove_vertices()
+    :param removed_edges: list of removed edges obtained from an earlier
+                                function: remove_edges() or remove_vertices()
     :return: igraph.Graph
         A tree.
+    : return  G_temp - igraph.Graph - G_aux restaurado
+
     """
 
     # Step  # 1: Genarate list of trees in S_ forest
     forest = S_.clusters().subgraphs()  # List of trees in S_
+    G_flag = False  #TODO: variavel nova que indica se o grafo auxiliar
+                    #precisou ser restaurado
 
     while len(forest) > 1:
 
@@ -91,7 +101,51 @@ def join_forest(G, S_):
         if paths:
             p = choice(paths)
         else:
-            print('entrou no continue do paths')
+            #   #TODO: Aqui é o problema
+            #   When there is no path to reconnect trees in the forest,
+            #       it is required to restore G (G_aux) which does not
+            #       considering some vertices and edges of the original
+            #       graph
+
+            ### esse bloco é novo ###
+            #
+            # Identifico se na função anterior, o que foi mudado
+            #       e tento restaurar
+            #   Quando vértices não são removidos, somente a aresta foi removida
+            #
+            if removed_edges is not None and removed_vertices is None:
+                u = removed_edges[0][0]
+                v = removed_edges[0][1]
+
+                G.add_edge(G.vs.find(name=u), G.vs.find(name=v))
+                #TODO: qual o cost da aresta removida que tem que ser restaurada ?
+
+                G_flag = True
+            #   quando vértices são removidas
+            #       Mais de uma aresta podem ser removidas
+            elif removed_vertices is not None and removed_edges is not None:
+                for new_e in removed_edges:
+
+                    u = new_e[0]
+                    v = new_e[1]
+
+                    try:
+                        u_id = G.vs.find(name=u)
+                    except ValueError:
+                        G.add_vertex(name=u)
+                        #TODO: qual o weight do vertice removido que tem que ser restaurado ?
+
+                    try:
+                        u_id = G.vs.find(name=v)
+                    except ValueError:
+                        G.add_vertex(name=v)
+                        #TODO: qual o weight do vertice removido que tem que ser restaurado ?
+
+                    G.add_edge(G.vs.find(name=u), G.vs.find(name=v))
+                    #TODO: qual o cost da aresta removida que tem que ser restaurada ?
+                    G_flag = True
+            ### esse bloco é novo ###
+
             continue
 
         # First s is u
@@ -189,7 +243,15 @@ def join_forest(G, S_):
         # List of forests
         forest = S_.clusters().subgraphs()
 
-    return S_
+        #### esse bloco é novo ###
+        if G_flag:
+            G_temp = G.copy()
+        else:
+            G_temp = None
+        #### esse bloco é novo ###
+
+    return S_, G_temp
+
 
 def remove_edges(G, S, n_changes=1):
     """
@@ -223,10 +285,11 @@ def remove_edges(G, S, n_changes=1):
         target = S_.vs.find(target)['name']  # edge to remove target NAME in S_
 
         # Edge to remove index in G
-        e_to_remove_in_G = G_aux.es.select(_source=G_aux.vs.find(name=source),
-                                           _target=G_aux.vs.find(name=target)).indices[0]
+        e_to_remove_in_G = G_aux.es.select(
+                                _source=G_aux.vs.find(name=source),
+                                _target=G_aux.vs.find(name=target))
 
-        G_aux.delete_edges(e_to_remove_in_G)
+        G_aux.delete_edges(e_to_remove_in_G.indices[0])
 
         S_.delete_edges(e_to_remove)
 
@@ -236,14 +299,24 @@ def remove_edges(G, S, n_changes=1):
 
         # if S_ is a forest, join trees in forest
         else:
-            S_ = join_forest(G_aux, S_)
+            S_, G_temp = join_forest(G_aux,
+                                        S_,
+                                        removed_edges=[(source,
+                                                        target,
+                                                        e_to_remove["cost"])])
+            #### esse bloco é novo ###
+            if G_temp is not None:
+                G_aux = G_temp.copy()
+            #### esse bloco é novo ###
 
     return S_
 
+
 def remove_vertices(G, S, n_changes=1):
     """
-        Dado um número de alterações, remove vértices e reconecta as árvores formadas,
-        retornando no final uma solução vizinha S_
+        Dado um número de alterações, remove vértices e
+            reconecta as árvores formadas,
+            retornando no final uma solução vizinha S_
     :param G_aux: igraph.Graph
         Original graph
     :param S: igraph.Graph
@@ -261,12 +334,20 @@ def remove_vertices(G, S, n_changes=1):
 
         G_aux = G_orig.copy()
 
-        # print(S_)
-        v_to_remove = choice(S_.vs)  # random vertice in S_
+        # random vertice in S_
+        v_to_remove = choice(S_.vs)
+        removed_vertices = (v_to_remove["name"], v_to_remove["weight"])
 
-        edges_from_v_S = S_.es.select(_source=v_to_remove).indices  # indexes of edges from v_to_remove in S_
+        # print("v_to_remove")
+        # print(v_to_remove)
+
+        # indexes of edges from v_to_remove in S_
+        edges_from_v_S = S_.es.select(_source=v_to_remove).indices
 
         edges_to_remove_G = []
+
+        #TODO: var nova para tentar restaurar G dentro de join_forest
+        removed_edges = []
 
         # Get index of edges to remove in G
         for edge in edges_from_v_S:
@@ -277,14 +358,18 @@ def remove_vertices(G, S, n_changes=1):
             u = S_.vs.find(idx_u)['name']  # name of source from edge
             v = S_.vs.find(idx_v)['name']  # name of target from edge
 
-            edge_in_G = G_aux.es.select(_source=G_aux.vs.find(name=u), _target=G_aux.vs.find(name=v)).indices[0]
+            edge_in_G = G_aux.es.select(_source=G_aux.vs.find(name=u),
+                                        _target=G_aux.vs.find(name=v))
 
-            edges_to_remove_G.append(edge_in_G)
+            #TODO: var nova para tentar restaurar G dentro de join_forest
+            removed_edges.append((u, v, edge_in_G["cost"]))
+
+            edges_to_remove_G.append(edge_in_G.indices[0])
 
         G_aux.delete_edges(edges_to_remove_G)
 
-        #
-        v_to_remove_G = G_aux.vs.find(name=v_to_remove['name'])  # index of v_to_remove in G
+        # index of v_to_remove in G
+        v_to_remove_G = G_aux.vs.find(name=v_to_remove["name"])
 
         G_aux.delete_vertices(v_to_remove_G)
 
@@ -296,11 +381,17 @@ def remove_vertices(G, S, n_changes=1):
 
         # if S_ is a forest, join trees in forest
         else:
-            S_ = join_forest(G_aux, S_)
+            S_, G_temp = join_forest(G_aux, S_, removed_vertices, removed_edges)
+
+            #### bloco novo ####
+            if G_temp is not None:
+                G_aux = G_temp.copy()
+            #### bloco novo ####
 
     return S_
 
-def metropolis(G, S_ini, Temperature, Temp_ini,n_iter_temperature):
+
+def metropolis(G, S_ini, Temperature, Temp_ini,n_iter_temperature, points):
     """
         função que implementa o algoritmo de metropolis
 
@@ -319,16 +410,27 @@ def metropolis(G, S_ini, Temperature, Temp_ini,n_iter_temperature):
     print("Running metropolis for temperature %s" % Temperature)
 
     Best_S = S_ini.copy()
+    Best_process = None
 
     for i in range(0, n_iter_temperature):
 
         # GERAR um vizinho s de forma aleatória na vizinhança ℵ𝑠
-        S_viz, process = get_neighbor(G, Best_S, Temperature, Temp_ini)
+        S_viz, process = get_neighbor(G, Best_S, Temperature, Temp_ini, points)
 
         # S_viz = remove_vertices(G, Best_S)
 
         if calc_pontuacao(G, S_viz) <= calc_pontuacao(G, Best_S):
             Best_S = S_viz.copy()
+
+            Best_process = process
+
+            if process == 'remove_vertices':
+                points[0]+=1
+            elif process == 'remove_edges':
+                points[1]+=1
+            elif process == 'both':
+                points[2]+=1
+
         else:
             DELTA = calc_pontuacao(G, S_viz) - calc_pontuacao(G, Best_S)
             p = uniform(0, 1)
@@ -346,4 +448,4 @@ def metropolis(G, S_ini, Temperature, Temp_ini,n_iter_temperature):
                 if p < (1 / ans):
                     Best_S = S_viz.copy()
 
-    return Best_S
+    return Best_S, points, Best_process
