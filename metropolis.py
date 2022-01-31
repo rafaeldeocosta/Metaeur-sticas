@@ -62,7 +62,7 @@ def join_forest(G, S_, removed_vertices=None, removed_edges=None):
     """
         Function that returns a single tree made from a forest.
 
-    :param G: igraph.Graph
+    :param G_aux: igraph.Graph
         The original Graph.
     :param S_: igraph.Graph
         A forest.
@@ -82,6 +82,11 @@ def join_forest(G, S_, removed_vertices=None, removed_edges=None):
     G_flag = False  #TODO: variavel nova que indica se o grafo auxiliar
                     #precisou ser restaurado
 
+    max_attempts = round(len(S_.vs['name']) / 2)
+    n_tries = list(range(0, max_attempts))  # Max number of attempts to find a path
+    # n_tries = list(range(0, 10))
+    G_aux = G.copy()
+
     while len(forest) > 1:
 
         # print(forest)
@@ -94,65 +99,62 @@ def join_forest(G, S_, removed_vertices=None, removed_edges=None):
         v = choice(t_v.vs)['name']
 
         # Step #4: Get in the original Graph (G) all paths that connects u and v
-        paths = G.get_all_shortest_paths(G.vs.find(name=u),
-                                         to=G.vs.find(name=v))
+        paths = G_aux.get_all_shortest_paths(G_aux.vs.find(name=u),
+                                             to=G_aux.vs.find(name=v))
 
         # Step #5: ramdonly choose one path from P TODO: THREADS
         if paths:
             p = choice(paths)
+
+            max_attempts = round(len(S_.vs['name']) / 2)
+            n_tries = list(range(0, max_attempts))  # Reset max number of attempts to find a path
+            # n_tries = list(range(0, 10))
         else:
-            #   #TODO: Aqui é o problema
-            #   When there is no path to reconnect trees in the forest,
-            #       it is required to restore G (G_aux) which does not
-            #       considering some vertices and edges of the original
-            #       graph
+            # When there is no path to reconnect t_u and t_v, with u and v, try others u and v,
+            # until you reach the maximum number of attempts
 
-            ### esse bloco é novo ###
-            #
-            # Identifico se na função anterior, o que foi mudado
-            #       e tento restaurar
-            #   Quando vértices não são removidos, somente a aresta foi removida
-            #
-            if removed_edges is not None and removed_vertices is None:
-                u = removed_edges[0][0]
-                v = removed_edges[0][1]
+            if n_tries:
+                n_tries.pop()
+                continue
+            else:
+                #   #TODO: Aqui é o problema
+                #   When there is no path to reconnect trees in the forest,
+                #       it is required to restore G (G_aux) which does not
+                #       considering some vertices and edges of the original
+                #       graph
 
-                G.add_edge(G.vs.find(name=u), G.vs.find(name=v))
-                #TODO: qual o cost da aresta removida que tem que ser restaurada ?
+                #
+                # If vertices were removed, add then in G.
+                #
+                if removed_vertices is not None:
+                    u = removed_vertices[0]  # Vertice name to add
+                    if u not in G_aux.vs['name']:
+                        penalty = removed_vertices[1]  # Vertice penalty
+                        G_aux.add_vertices([u], attributes={'penalties': [penalty]})
 
-                G_flag = True
-            #   quando vértices são removidas
-            #       Mais de uma aresta podem ser removidas
-            elif removed_vertices is not None and removed_edges is not None:
+                # for all edges removed, add them
                 for new_e in removed_edges:
 
-                    u = new_e[0]
-                    v = new_e[1]
+                    u = new_e[0]  # edge source name
+                    v = new_e[1]  # edge target name
+                    cost = new_e[2]  # edge cost
 
-                    try:
-                        u_id = G.vs.find(name=u)
-                    except ValueError:
-                        G.add_vertex(name=u)
-                        #TODO: qual o weight do vertice removido que tem que ser restaurado ?
+                    if len(G_aux.es.select(_source=G_aux.vs.find(name=u),
+                                           _target=G_aux.vs.find(name=v))) == 0 and \
+                            len(G_aux.es.select(_source=G_aux.vs.find(name=v),
+                                                _target=G_aux.vs.find(name=u))) == 0:
 
-                    try:
-                        u_id = G.vs.find(name=v)
-                    except ValueError:
-                        G.add_vertex(name=v)
-                        #TODO: qual o weight do vertice removido que tem que ser restaurado ?
+                        G_aux.add_edges([(G_aux.vs.find(name=u), G_aux.vs.find(name=v))], attributes={'cost': [cost]})
 
-                    G.add_edge(G.vs.find(name=u), G.vs.find(name=v))
-                    #TODO: qual o cost da aresta removida que tem que ser restaurada ?
-                    G_flag = True
-            ### esse bloco é novo ###
+                        G_flag = True
 
-            continue
+                continue
 
         # First s is u
         s = u
         for t in p:
 
-            vertex_t_in_G = G.vs[t]["name"]
+            vertex_t_in_G = G_aux.vs[t]["name"]
 
             if s == vertex_t_in_G:
                 # discarding the first element of p because it is u
@@ -170,7 +172,7 @@ def join_forest(G, S_, removed_vertices=None, removed_edges=None):
                     vertex_s = S_.vs.find(name=s)
 
                     if vertex_s['penalties'] is None:
-                        vertex_s['penalties'] = G.vs.find(name=s)['penalties']
+                        vertex_s['penalties'] = G_aux.vs.find(name=s)['penalties']
 
                 elif vertex_t_in_G not in S_.vs['name']:  # len(S_.vs.select(name=vertex_t_in_G)) == 0:
                     S_.add_vertex(name=vertex_t_in_G)
@@ -178,7 +180,7 @@ def join_forest(G, S_, removed_vertices=None, removed_edges=None):
 
                     if vertex_t['penalties'] is None:
                         vertex_t['penalties'] = \
-                            G.vs.find(name=vertex_t_in_G)['penalties']
+                            G_aux.vs.find(name=vertex_t_in_G)['penalties']
 
                 #
                 # Step #7: Before add the edge s --t , check if the edge
@@ -195,8 +197,8 @@ def join_forest(G, S_, removed_vertices=None, removed_edges=None):
                     e_in_S_ = S_.es.select(_source=S_.vs.find(name=s),
                                            _target=S_.vs.find(name=vertex_t_in_G))
 
-                    e_in_G = G.es.select(_source=G.vs.find(name=s),
-                                         _target=G.vs.find(name=vertex_t_in_G))
+                    e_in_G = G_aux.es.select(_source=G_aux.vs.find(name=s),
+                                             _target=G_aux.vs.find(name=vertex_t_in_G))
 
                     # Updating cost of new edge in S_
                     if len(e_in_G) == 0:
@@ -243,14 +245,7 @@ def join_forest(G, S_, removed_vertices=None, removed_edges=None):
         # List of forests
         forest = S_.clusters().subgraphs()
 
-        #### esse bloco é novo ###
-        if G_flag:
-            G_temp = G.copy()
-        else:
-            G_temp = None
-        #### esse bloco é novo ###
-
-    return S_, G_temp
+    return S_
 
 
 def remove_edges(G, S, n_changes=1):
@@ -273,10 +268,11 @@ def remove_edges(G, S, n_changes=1):
 
     for n_e in range(0, n_changes):
 
-        G_aux = G_orig.copy()  # TODO: Acho que não tem que ter isso
+        G_aux = G_orig.copy()
 
         # Step #1: Ramdonly choose an edge to remove
         e_to_remove = choice(S_.es)
+        cost_e_to_remove = e_to_remove["cost"]
 
         source = e_to_remove.tuple[0]  # edge to remove source index in S_
         target = e_to_remove.tuple[1]  # edge to remove target index in S_
@@ -299,15 +295,10 @@ def remove_edges(G, S, n_changes=1):
 
         # if S_ is a forest, join trees in forest
         else:
-            S_, G_temp = join_forest(G_aux,
-                                        S_,
+            S_ = join_forest(G_aux, S_,
                                         removed_edges=[(source,
                                                         target,
-                                                        e_to_remove["cost"])])
-            #### esse bloco é novo ###
-            if G_temp is not None:
-                G_aux = G_temp.copy()
-            #### esse bloco é novo ###
+                                                        cost_e_to_remove)])
 
     return S_
 
@@ -336,7 +327,7 @@ def remove_vertices(G, S, n_changes=1):
 
         # random vertice in S_
         v_to_remove = choice(S_.vs)
-        removed_vertices = (v_to_remove["name"], v_to_remove["weight"])
+        removed_vertices = (v_to_remove["name"], v_to_remove["penalties"])
 
         # print("v_to_remove")
         # print(v_to_remove)
@@ -381,12 +372,8 @@ def remove_vertices(G, S, n_changes=1):
 
         # if S_ is a forest, join trees in forest
         else:
-            S_, G_temp = join_forest(G_aux, S_, removed_vertices, removed_edges)
+            S_ = join_forest(G_aux, S_, removed_vertices, removed_edges)
 
-            #### bloco novo ####
-            if G_temp is not None:
-                G_aux = G_temp.copy()
-            #### bloco novo ####
 
     return S_
 

@@ -14,8 +14,8 @@ from utils import vert_premios
 if __name__ == "__main__":
     print("trabalho de Meta Heuristica: Simulated Annealing")
 
-    arq = "K100.1"
-
+    # arq = "instances/our-instances/E/e01.stp-B"
+    arq = 'C01-A'
     # G: Original Graph from instance in arq (igraph.Graph)
     # V: Vertices name of G (not vertex id) (list - [Vi, Vj, ...])
     # E: Edges of G (dict - {edge_index:(Vi, Vj)}); edge_index here is different
@@ -92,8 +92,8 @@ if __name__ == "__main__":
     sol_Pruned_T_terminais = calc_pontuacao(G, Pruned_T_Terminais)
     print("Score of Pruned_T_Terminais %s" % sol_Pruned_T_terminais)
 
-    Pruned_T_Terminais.vs["label"] = Pruned_T_Terminais.vs["name"]
-    plot(Pruned_T_Terminais)
+    # Pruned_T_Terminais.vs["label"] = Pruned_T_Terminais.vs["name"]
+    # plot(Pruned_T_Terminais)
 
 
     #
@@ -106,10 +106,10 @@ if __name__ == "__main__":
     Temp_fin = 1
     ALPHA = 0.5
     SA_MAX = 400
-    f = 'Temp_curr*0.7'  # Função decaimento da temperatura > IMPORTANTE: em função de "Temp_curr"
+    f = 'Temp_curr*0.9'  # Função decaimento da temperatura > IMPORTANTE: em função de "Temp_curr"
 
     Star_S = SA(G, Temp_ini, Temp_fin, S, SA_MAX, f)
     sol_Star_S = calc_pontuacao(G, Star_S)
     Star_S.vs["label"] = Star_S.vs["name"]
-    plot(Star_S)
+    # plot(Star_S)
     print("Score of Star_S %s" % sol_Star_S)
