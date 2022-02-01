@@ -1,6 +1,87 @@
 from igraph import Graph
 from igraph import plot
 import itertools as it
+from os import listdir
+
+
+def create_graph_from_stp(f):
+    """
+        create graph from file whose format is stp
+
+        Args:
+            f - string - filename of the PCSTP instance in stp format
+
+        Returns:
+            G: igraph.Graph
+            V:  list  of vertices
+            vertex_penalties: dict - {vertice: weight of vertices}
+            E: dict - {index: edges (Vi, Vj)}
+            edge_costs: dict - {index: cost of edges}
+
+    """
+
+    fd = open(f, "r")
+    instance = fd.readlines()
+    # for i in instance:
+    #     print(i)
+    # exit()
+
+    graph_section_index = instance.index("SECTION Graph\n")
+    nodes = instance[graph_section_index+1].split()[1]
+    V = list(range(1, int(nodes)+1)) # list of vertices [v1,v2,...)]
+    vertex_penalties = {}   # dict of penalties which key is the vertex id
+                            # and value is the weight of that vertice
+                            # {v1:w1, v2:w2, ...}
+    for v in V:
+        vertex_penalties[v] = 0
+
+
+
+    E = {}  # dict of edges which key is the edge id and value the edge (vi,vj)
+            # {e1:(vi, vj), e2:(vj, vk), ...}
+
+    edge_costs = {} # dict of edge costs which key is the edge id and value is
+                    # the cost of that edge {e1:c1, e2:c2, ...}
+
+    links = instance[graph_section_index+2].split()[1]
+    i=1
+    for e in instance[graph_section_index+3:graph_section_index+int(links)+3]:
+        e = e.split()
+
+        E[i] = ( int(e[1]) , int(e[2]) )
+        edge_costs[i] = float(e[3])
+        i+=1
+
+
+    terminals_section_index = instance.index("SECTION Terminals\n")
+    terminals = int(instance[terminals_section_index+1].split()[1])
+    for t in instance[terminals_section_index+2:
+                terminals_section_index+int(terminals)+2]:
+        t = t.split()
+        vertex_penalties[int(t[1])] = float(t[2])
+
+    G = Graph()
+    G.add_vertices(len(V))  # adding the number of vertices of the graph
+    G.vs["name"] = list(V) # setting labels to identify vertices
+
+    edges_list = []
+    for e in E.values():
+        edges_list.append((e[0]-1, e[1]-1))
+
+    # inserting edges of the graph
+    G.add_edges(edges_list)
+
+    # inserting edges of the graph
+    # for e in E.values():
+    #     u = e[0]
+    #     v = e[1]
+    #     G.add_edge(G.vs.find(name=u), G.vs.find(name=v))
+
+    # Updating G with cost of edges and penalties of vertices
+    G.es['cost'] = list(edge_costs.values())
+    G.vs['penalties'] = list(vertex_penalties.values())
+
+    return G, V, vertex_penalties, E, edge_costs
 
 
 def create_graph_from(f):
@@ -35,7 +116,7 @@ def create_graph_from(f):
         v = v.split()
         V.append(int(v[0]))   # vertices ids are subtracted by one because
                                 # igraph vertex id begins with 0
-        vertex_penalties[int(v[0])] = int(v[3])
+        vertex_penalties[int(v[0])] = float(v[3])
 
 
     E = {}  # dict of edges which key is the edge id and value the edge (vi,vj)
@@ -48,7 +129,7 @@ def create_graph_from(f):
     for e in instance[link_index+2:-1]:
         e = e.split()
         E[int(e[0])] = ( int(e[1]), int(e[2]))
-        edge_costs[int(e[0])] = int(e[3])
+        edge_costs[int(e[0])] = float(e[3])
 
 
     G = Graph()
@@ -346,15 +427,39 @@ def get_graph_of_terminals():
     return
 
 
-
 if __name__ == "__main__":
-    arq = "K100.1"
-    G, V, vertex_penalties, E, edge_costs = create_graph_from(arq)
-    print(V)
-    print(vertex_penalties)
-    print(E)
-    print(edge_costs)
+    dir = "instances/our-instances/"
+    subdirs = listdir(dir)
+    for subd in subdirs:
 
-    layout = G.layout("lgl")
-    G.vs["label"] = G.vs["name"]
-    plot(G,layout=layout)
+        path = dir + subd
+        files = listdir(path)
+        for f in files:
+            filename = path + "/" + f
+            print(filename)
+            if subd == "pcstp":
+                continue
+            elif subd == "E" or subd == "SteinCD":
+                G, V, vertex_penalties, E, edge_costs = create_graph_from(filename)
+            else:
+                G, V, vertex_penalties, E, edge_costs = create_graph_from_stp(filename)
+            # print(V)
+            # print(vertex_penalties)
+            # print(E)
+            # print(edge_costs)
+
+            layout = G.layout("lgl")
+            G.vs["label"] = G.vs["name"]
+            plot(G,layout=layout)
+
+
+    # arq = "instances/our-instances/PCSPG-ACTMODPC/drosophila005.stp"
+    # G, V, vertex_penalties, E, edge_costs = create_graph_from_stp(arq)
+    # print(V)
+    # print(vertex_penalties)
+    # print(E)
+    # print(edge_costs)
+    #
+    # layout = G.layout("lgl")
+    # G.vs["label"] = G.vs["name"]
+    # plot(G,layout=layout)
