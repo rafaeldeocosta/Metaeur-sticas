@@ -245,6 +245,8 @@ def join_forest(G, S_, removed_vertices=None, removed_edges=None):
         # List of forests
         forest = S_.clusters().subgraphs()
 
+    del G_aux
+
     return S_
 
 
@@ -299,6 +301,8 @@ def remove_edges(G, S, n_changes=1):
                                         removed_edges=[(source,
                                                         target,
                                                         cost_e_to_remove)])
+
+    del G_aux
 
     return S_
 
@@ -374,6 +378,7 @@ def remove_vertices(G, S, n_changes=1):
         else:
             S_ = join_forest(G_aux, S_, removed_vertices, removed_edges)
 
+    del G_aux
 
     return S_
 

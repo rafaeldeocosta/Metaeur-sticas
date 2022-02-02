@@ -75,9 +75,9 @@ if __name__ == "__main__":
                     arq_path = os.path.join(instances_path, arq)
 
                     # K100 format
-                    G, V, vertex_penalties, E, edge_costs = create_graph_from(arq_path)
+                    # G, V, vertex_penalties, E, edge_costs = create_graph_from(arq_path)
                     # STP format
-                    # G, V, vertex_penalties, E, edge_costs = create_graph_from_stp(arq_path)
+                    G, V, vertex_penalties, E, edge_costs = create_graph_from_stp(arq_path)
 
                     # ###################################################################
                     # Generate subgraph of G connecting terminals #
