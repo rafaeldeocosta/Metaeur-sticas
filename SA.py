@@ -1,8 +1,9 @@
+from cooling import get_cooling_strategy
 from metropolis import metropolis
 from utils import calc_pontuacao
 
 
-def SA(G, Temp_ini, Temp_fin, S_ini, SA_MAX, f):
+def SA(G, Temp_ini, Temp_fin, S_ini, SA_MAX, cooling_str):
     """
         função que implementa o simulated annealing
 
@@ -17,6 +18,9 @@ def SA(G, Temp_ini, Temp_fin, S_ini, SA_MAX, f):
 
     """
     print("Starting SA ...")
+
+    # Number of steps
+    t = 0
 
     # print(Temp_ini)
     # print(Temp_fin)
@@ -50,6 +54,9 @@ def SA(G, Temp_ini, Temp_fin, S_ini, SA_MAX, f):
         New_S = Best_S.copy()
 
         # Cooling strategy
+        f = get_cooling_strategy(cooling_str)
         Temp_curr = eval(f)
+
+        t+=1
 
     return Star_S

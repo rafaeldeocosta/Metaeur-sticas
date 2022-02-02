@@ -19,22 +19,26 @@ if __name__ == "__main__":
     print('#-----------------------------------------------------------------#\n')
 
     # Path of instances to get solution
-    instances_path = 'intances_teste'
+    instances_path = 'instances\instance_test'
 
     # list of instances
     instances = os.listdir(instances_path)
 
-
     # TODO: get params from file called 'cooling_strategies'
     # [Temp_ini, Temp_fin, SA_max, f]
-    args = [[1000, 1, 20, 'Temp_curr*0.5']]
+    args = [[1000, 1, 20, "linear"]]
 
     for arg in args:
 
         Temp_ini = arg[0]
         Temp_fin = arg[1]
         SA_MAX = arg[2]
-        f = arg[3]  # Função decaimento da temperatura > IMPORTANTE: em função de "Temp_curr"
+        #
+        # String that identifies the cooling strategy.
+        # Options: exponential, linear and logarithm
+        # Such string is useful to run get_cooling_strategy in cooling.py
+        #
+        cooling_str = arg[3]  # Função decaimento da temperatura > IMPORTANTE: em função de "Temp_curr"
 
         arg_number = args.index(arg) + 1
 
@@ -45,7 +49,7 @@ if __name__ == "__main__":
         print("Set {} of arguments:\n Initial Temperature: {}\n"
               "Final Temperature: {}\n"
               "Number of iterations in Metropolis: {}\n"
-              "Decay Function: {}".format(arg_number, Temp_ini, Temp_fin, SA_MAX, f))
+              "Decay Function: {}".format(arg_number, Temp_ini, Temp_fin, SA_MAX, cooling_str))
         print('#-----------------------------------------------------------------#\n')
 
         for arq in instances:
@@ -109,7 +113,7 @@ if __name__ == "__main__":
 
                 start_time = datetime.now()
 
-                Star_S = SA(G, Temp_ini, Temp_fin, S, SA_MAX, f)
+                Star_S = SA(G, Temp_ini, Temp_fin, S, SA_MAX, cooling_str)
 
                 end_time = datetime.now()
 
@@ -130,7 +134,7 @@ if __name__ == "__main__":
                 ####################################################
 
                 path_results = create_xlsx(instances_path, arg_number, arq, G, S, Star_S, sol_Pruned_T_terminais, sol_Star_S,
-                                        Temp_ini, Temp_fin, f, SA_MAX, process_time)
+                                        Temp_ini, Temp_fin, cooling_str, SA_MAX, process_time)
 
 
         create_resume(path_results)
@@ -139,4 +143,3 @@ if __name__ == "__main__":
     print('#-----------------------------------------------------------------#\n')
     print("FIM DO PROCESSAMENTO")
     print('#-----------------------------------------------------------------#\n')
-
