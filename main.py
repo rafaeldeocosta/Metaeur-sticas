@@ -24,8 +24,8 @@ if __name__ == "__main__":
     # list of instances
     instances = os.listdir(instances_path)
 
-    # [Temp_ini, Temp_fin, SA_max, cooling_str]
-    args = [[1000, 1, 20, "linear"]]
+    # [Temp_ini, Temp_fin, SA_max, cooling_str, SA type]  # SA_type must be SA or SA-LNS
+    args = [[1000, 1, 20, "linear", 'SA-LNS']]
 
     for arg in args:
 
@@ -38,6 +38,8 @@ if __name__ == "__main__":
         # Such string is useful to run get_cooling_strategy in cooling.py
         #
         cooling_str = arg[3]  # Função decaimento da temperatura > IMPORTANTE: em função de "Temp_curr"
+
+        SA_type = arg[4]
 
         arg_number = args.index(arg) + 1
 
@@ -113,7 +115,7 @@ if __name__ == "__main__":
                 start_time = datetime.now()
 
                 # type must be 'SA' or 'SA-LNS'
-                Star_S, points = SA(G, Temp_ini, Temp_fin, S, SA_MAX, cooling_str, type='SA-LNS')
+                Star_S, points = SA(G, Temp_ini, Temp_fin, S, SA_MAX, cooling_str, type=SA_type)
 
                 end_time = datetime.now()
 
