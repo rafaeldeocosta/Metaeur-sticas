@@ -10,7 +10,7 @@ def get_cooling_strategy(cooling_str):
     if cooling_str == "exponential":
         f = 'Temp_ini*pow(0.5,t)'
     elif cooling_str == "linear":
-        f = 'Temp_ini - (0.5 * t)'
+        f = 'Temp_ini - (5 * t)'
     elif cooling_str == "logarithm":
         f = '1 / log(t + 0.5)'
 

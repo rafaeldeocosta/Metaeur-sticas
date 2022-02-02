@@ -378,7 +378,7 @@ def remove_vertices(G, S, n_changes=1):
     return S_
 
 
-def metropolis(G, S_ini, Temperature, Temp_ini,n_iter_temperature, points):
+def metropolis(G, S_ini, Temperature, Temp_ini,n_iter_temperature, points, type):
     """
         função que implementa o algoritmo de metropolis
 
@@ -399,6 +399,11 @@ def metropolis(G, S_ini, Temperature, Temp_ini,n_iter_temperature, points):
     Best_S = S_ini.copy()
     Best_process = None
 
+    if type == 'SA':
+        incr = 0
+    if type == 'SA-LNS':
+        incr = 1
+
     for i in range(0, n_iter_temperature):
 
         # GERAR um vizinho s de forma aleatória na vizinhança ℵ𝑠
@@ -412,11 +417,11 @@ def metropolis(G, S_ini, Temperature, Temp_ini,n_iter_temperature, points):
             Best_process = process
 
             if process == 'remove_vertices':
-                points[0]+=1
+                points[0]+=incr
             elif process == 'remove_edges':
-                points[1]+=1
+                points[1]+=incr
             elif process == 'both':
-                points[2]+=1
+                points[2]+=incr
 
         else:
             DELTA = calc_pontuacao(G, S_viz) - calc_pontuacao(G, Best_S)

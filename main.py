@@ -24,8 +24,7 @@ if __name__ == "__main__":
     # list of instances
     instances = os.listdir(instances_path)
 
-    # TODO: get params from file called 'cooling_strategies'
-    # [Temp_ini, Temp_fin, SA_max, f]
+    # [Temp_ini, Temp_fin, SA_max, cooling_str]
     args = [[1000, 1, 20, "linear"]]
 
     for arg in args:
@@ -113,7 +112,8 @@ if __name__ == "__main__":
 
                 start_time = datetime.now()
 
-                Star_S = SA(G, Temp_ini, Temp_fin, S, SA_MAX, cooling_str)
+                # type must be 'SA' or 'SA-LNS'
+                Star_S, points = SA(G, Temp_ini, Temp_fin, S, SA_MAX, cooling_str, type='SA-LNS')
 
                 end_time = datetime.now()
 
@@ -134,12 +134,13 @@ if __name__ == "__main__":
                 ####################################################
 
                 path_results = create_xlsx(instances_path, arg_number, arq, G, S, Star_S, sol_Pruned_T_terminais, sol_Star_S,
-                                        Temp_ini, Temp_fin, cooling_str, SA_MAX, process_time)
+                                        Temp_ini, Temp_fin, cooling_str, SA_MAX, process_time, points)
 
 
         create_resume(path_results)
 
-
+    print('\n\n#-----------------------------------------------------------------#')
     print('#-----------------------------------------------------------------#\n')
-    print("FIM DO PROCESSAMENTO")
+    print("FIM DO PROCESSAMENTO\n")
+    print('#-----------------------------------------------------------------#')
     print('#-----------------------------------------------------------------#\n')

@@ -432,7 +432,7 @@ def get_graph_of_terminals():
 
 
 def create_xlsx(path, arg_number, instance, G, initial_S, star_S,
-                initial_pont, star_pont, temp_ini, temp_f, f, SA_max, process_time):
+                initial_pont, star_pont, temp_ini, temp_f, f, SA_max, process_time, points):
 
     folder_name = 'Results_' + str(arg_number)
     if folder_name not in os.listdir(path):
@@ -496,7 +496,7 @@ def create_xlsx(path, arg_number, instance, G, initial_S, star_S,
     resume = pd.DataFrame({'Nome da Instancia': [instance], 'Pontuação Inicial': [initial_pont],
                            'Pontuação Final': [star_pont], 'T inicial': [temp_ini], 'T final': [temp_f],
                            'f decaimento': [f], 'iterações Metropolis': [SA_max],
-                           'Tempo de Processamento': [process_time]})
+                           'Tempo de Processamento': [process_time], 'Bilhetes': [points]})
 
     resume.to_excel(writer, sheet_name='Resume', index=False)
 
