@@ -431,16 +431,17 @@ def get_graph_of_terminals():
     return
 
 
-def create_xlsx(path, arg_number, instance, G, initial_S, star_S,
+def create_xlsx(path, n_simul, arg_number, instance, G, initial_S, star_S,
                 initial_pont, star_pont, temp_ini, temp_f, f, SA_max, process_time, points):
 
     folder_name = 'Results_' + str(arg_number)
+
     if folder_name not in os.listdir(path):
         os.mkdir(os.path.join(path, folder_name))
 
     path_results = os.path.join(path, folder_name)
 
-    file_name = instance.replace('.', '_').replace('-', '_') + '_result_{}.xlsx'.format(arg_number)
+    file_name = '{}_'.format(n_simul) + instance.replace('.', '_').replace('-', '_') + '_result_{}.xlsx'.format(arg_number)
 
     file_path = os.path.join(path_results, file_name)
 
@@ -495,10 +496,10 @@ def create_xlsx(path, arg_number, instance, G, initial_S, star_S,
 
     f = get_cooling_strategy(f)
 
-    resume = pd.DataFrame({'Nome da Instancia': [instance], 'Pontuação Inicial': [initial_pont],
-                           'Pontuação Final': [star_pont], 'T inicial': [temp_ini], 'T final': [temp_f],
-                           'f decaimento': [f], 'iterações Metropolis': [SA_max],
-                           'Tempo de Processamento': [process_time], 'Bilhetes': [points]})
+    resume = pd.DataFrame({'Rodada': [n_simul], 'Instancia': [instance], 'Sol_ini': [initial_pont],
+                           'Sol_f': [star_pont], 'T inicial': [temp_ini], 'T final': [temp_f],
+                           'f': [f], 'iterações Metrop': [SA_max],
+                           'Time': [process_time], 'Bilhetes': [points]})
 
     resume.to_excel(writer, sheet_name='Resume', index=False)
 
