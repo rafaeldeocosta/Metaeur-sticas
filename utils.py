@@ -1,7 +1,11 @@
+import os
+
+import pandas as pd
+
 from igraph import Graph
 from igraph import plot
 import itertools as it
-from os import listdir
+
 
 
 def create_graph_from_stp(f):
@@ -427,13 +431,107 @@ def get_graph_of_terminals():
     return
 
 
+def create_xlsx(path, arg_number, instance, G, initial_S, star_S,
+                initial_pont, star_pont, temp_ini, temp_f, f, SA_max, process_time):
+
+    folder_name = 'Results_' + str(arg_number)
+    if folder_name not in os.listdir(path):
+        os.mkdir(os.path.join(path, folder_name))
+
+    path_results = os.path.join(path, folder_name)
+
+    file_name = instance.replace('.', '_').replace('-', '_') + '_result_{}.xlsx'.format(arg_number)
+
+    file_path = os.path.join(path_results, file_name)
+
+    writer = pd.ExcelWriter(file_path, engine='xlsxwriter')
+
+    # ------------------------------------------------------------ X
+    # For G
+
+    G_vertex = G.get_vertex_dataframe()
+    G_edges = G.get_edge_dataframe()
+
+    V_guide = G_vertex['name'].to_dict()  # dicionário com {index do vertice em aux_G: Nome do vertice em aux_G}
+    # dataframe com arestas de aux_G
+    G_edges['source'].replace(V_guide, inplace=True)  # Substitui o valor de source (que e index) para NOME
+    G_edges['target'].replace(V_guide, inplace=True)  # Substitui o valor de target (que e index) para NOME
+
+    G_vertex.to_excel(writer, sheet_name='Instance', index=False, startrow=0, startcol=0)
+    G_edges.to_excel(writer, sheet_name='Instance', index=False, startrow=len(G_vertex.index) + 2)
+
+    # ------------------------------------------------------------ X
+
+    # ------------------------------------------------------------ X
+    # For initial solution
+
+
+    initial_S_vertex = initial_S.get_vertex_dataframe()
+    initial_S_edges = initial_S.get_edge_dataframe()
+
+    V_guide = initial_S_vertex['name'].to_dict()  # dicionário com {index do vertice em aux_G: Nome do vertice em aux_G}
+    # dataframe com arestas de aux_G
+    initial_S_edges['source'].replace(V_guide, inplace=True)  # Substitui o valor de source (que e index) para NOME
+    initial_S_edges['target'].replace(V_guide, inplace=True)  # Substitui o valor de target (que e index) para NOME
+
+    initial_S_vertex.to_excel(writer, sheet_name='Initial_S', index=False, startrow=0, startcol=0)
+    initial_S_edges.to_excel(writer, sheet_name='Initial_S', index=False, startrow=len(initial_S_vertex.index) + 2)
+
+    # ------------------------------------------------------------ X
+    # For star solution
+
+    star_S_vertex = star_S.get_vertex_dataframe()
+    star_S_edges = star_S.get_edge_dataframe()
+
+    V_guide = star_S_vertex['name'].to_dict()  # dicionário com {index do vertice em aux_G: Nome do vertice em aux_G}
+    # dataframe com arestas de aux_G
+    star_S_edges['source'].replace(V_guide, inplace=True)  # Substitui o valor de source (que e index) para NOME
+    star_S_edges['target'].replace(V_guide, inplace=True)  # Substitui o valor de target (que e index) para NOME
+
+    star_S_vertex.to_excel(writer, sheet_name='Star_S', index=False, startrow=0, startcol=0)
+    star_S_edges.to_excel(writer, sheet_name='Star_S', index=False, startrow=len(star_S_vertex.index) + 2)
+
+    # ------------------------------------------------------------ X
+
+    resume = pd.DataFrame({'Nome da Instancia': [instance], 'Pontuação Inicial': [initial_pont],
+                           'Pontuação Final': [star_pont], 'T inicial': [temp_ini], 'T final': [temp_f],
+                           'f decaimento': [f], 'iterações Metropolis': [SA_max],
+                           'Tempo de Processamento': [process_time]})
+
+    resume.to_excel(writer, sheet_name='Resume', index=False)
+
+    writer.save()
+
+    return path_results
+
+
+def create_resume(results_path):
+
+    files = os.listdir(results_path)
+
+    df = pd.DataFrame()
+
+    for f in files:
+
+        f_path = os.path.join(results_path, f)
+
+        df_aux = pd.read_excel(f_path, sheet_name='Resume')
+
+        df = df.append(df_aux)
+
+    out_dir = os.path.join(results_path, 'Resume.xlsx')
+    df.to_excel(out_dir, index=False)
+
+    return 'fim'
+
+
 if __name__ == "__main__":
     dir = "instances/our-instances/"
-    subdirs = listdir(dir)
+    subdirs = os.listdir(dir)
     for subd in subdirs:
 
         path = dir + subd
-        files = listdir(path)
+        files = os.listdir(path)
         for f in files:
             filename = path + "/" + f
             print(filename)

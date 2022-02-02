@@ -1,115 +1,142 @@
-from igraph import plot
+from datetime import datetime
+import os
+
 from kruskal import kruskal
 from SA import SA
 from utils import calc_pontuacao
 from utils import create_graph_from
-# from utils import get_graph_of_terminals
-from utils import get_solution_list
 from utils import remove_costly_leafs
 from utils import select_sub_graph
-from utils import tira_grau1
 from utils import vert_premios
+from utils import create_xlsx
+from utils import create_resume
 
 
 if __name__ == "__main__":
-    print("trabalho de Meta Heuristica: Simulated Annealing")
 
-    # arq = "instances/our-instances/E/e01.stp-B"
-    arq = 'C01-A'
-    # G: Original Graph from instance in arq (igraph.Graph)
-    # V: Vertices name of G (not vertex id) (list - [Vi, Vj, ...])
-    # E: Edges of G (dict - {edge_index:(Vi, Vj)}); edge_index here is different
-    #                                               than edge_index in G
-    # vertex_penalties: Weight of vertices of G (dict - {vertice name: weight}
-    # edge_costs: Cost of edges of G (dict - {edge_index: cost of edge}
-    #                           edge_index here is equals in E
-    G, V, vertex_penalties, E, edge_costs = create_graph_from(arq)
+    print('#-----------------------------------------------------------------#\n')
+    print("Trabalho de Meta Heuristica: Simulated Annealing\n")
+    print('#-----------------------------------------------------------------#\n')
 
-    #
-    # Plot G
-    #
-    # G.vs["label"] = G.vs["name"]
-    # layout = G.layout("lgl")
-    # plot(G, layout=layout)
+    # Path of instances to get solution
+    instances_path = 'intances_teste'
 
-    # ##################################################
-    # Generate initial solution with kruskal algorithm #
-    ####################################################
-    #
-    # T: Tree obtained from G, which could be used as Initial Solution of SA
-    #       (igraph.Graph)
-    # T_edges_list:
-    # T, T_edges_list = kruskal(G, E, edge_costs)
-    #
-    # Plot T
-    #
-    # T.vs["label"] = T.vs["name"]
-    # layout = T.layout("lgl")
-    # plot(T, layout=layout)
-    #
-    # sol_T = calc_pontuacao(G, T)
-    # print("Score of T %s" % sol_T)
-
-    # Pruned_T = remove_costly_leafs(T)
-    #
-    # Plot Pruned_T
-    #
-    # Pruned_T.vs["label"] = Pruned_T.vs["name"]
-    # layout = Pruned_T.layout("lgl")
-    # plot(Pruned_T, layout=layout)
-    # sol_Pruned_T = calc_pontuacao(G, Pruned_T)
-    # print("Score of Pruned_T %s" % sol_Pruned_T)
-
-    # ###################################################################
-    # Generate initial solution with subgraph of G connecting terminals #
-    #####################################################################
-
-    terminais = vert_premios(G)
-    G_terminais, E_terminais, edge_costs_terminais = \
-        select_sub_graph(G, terminais)
-    #
-    # Plot G_Terminais
-    #
-    # G_terminais.vs["label"] = G_terminais.vs["name"]
-    # layout = G.layout("lgl")
-    # plot(G_terminais)
-
-    T_terminais, T_terminais_edges_list = \
-        kruskal(G_terminais, E_terminais, edge_costs_terminais)
-
-    sol_T_terminais = calc_pontuacao(G, T_terminais)
-    print("Score of T_Terminais %s" % sol_T_terminais)
-
-    #
-    # Plot T_Terminais
-    #
-    # T_terminais.vs["label"] = T_terminais.vs["name"]
-    # layout = T_terminais.layout("lgl")
-    # plot(T_terminais, layout=layout)
-
-    Pruned_T_Terminais = remove_costly_leafs(T_terminais)
-
-    sol_Pruned_T_terminais = calc_pontuacao(G, Pruned_T_Terminais)
-    print("Score of Pruned_T_Terminais %s" % sol_Pruned_T_terminais)
-
-    # Pruned_T_Terminais.vs["label"] = Pruned_T_Terminais.vs["name"]
-    # plot(Pruned_T_Terminais)
+    # list of instances
+    instances = os.listdir(instances_path)
 
 
-    #
-    # Run Simulated Annealing
-    #
+    # TODO: get params from file called 'cooling_strategies'
+    # [Temp_ini, Temp_fin, SA_max, f]
+    args = [[1000, 1, 20, 'Temp_curr*0.5']]
 
-    #TODO: get params from file called 'cooling_strategies'
-    S = Pruned_T_Terminais.copy()
-    Temp_ini = 1000
-    Temp_fin = 1
-    ALPHA = 0.5
-    SA_MAX = 400
-    f = 'Temp_curr*0.9'  # Função decaimento da temperatura > IMPORTANTE: em função de "Temp_curr"
+    for arg in args:
 
-    Star_S = SA(G, Temp_ini, Temp_fin, S, SA_MAX, f)
-    sol_Star_S = calc_pontuacao(G, Star_S)
-    Star_S.vs["label"] = Star_S.vs["name"]
-    # plot(Star_S)
-    print("Score of Star_S %s" % sol_Star_S)
+        Temp_ini = arg[0]
+        Temp_fin = arg[1]
+        SA_MAX = arg[2]
+        f = arg[3]  # Função decaimento da temperatura > IMPORTANTE: em função de "Temp_curr"
+
+        arg_number = args.index(arg) + 1
+
+        print('\n\n\n#-----------------------------------------------------------------#')
+        print('#-----------------------------------------------------------------#')
+        print('#-----------------------------------------------------------------#')
+        print('#-----------------------------------------------------------------#\n')
+        print("Set {} of arguments:\n Initial Temperature: {}\n"
+              "Final Temperature: {}\n"
+              "Number of iterations in Metropolis: {}\n"
+              "Decay Function: {}".format(arg_number, Temp_ini, Temp_fin, SA_MAX, f))
+        print('#-----------------------------------------------------------------#\n')
+
+        for arq in instances:
+
+            if 'Result' not in arq:
+
+                print('#-----------------------------------------------------------------#\n')
+                print("Instance being used: {}\n".format(arq))
+                print('#-----------------------------------------------------------------#\n')
+
+
+                # ###################################################################
+                # Generate graph G#
+                #####################################################################
+                arq_path = os.path.join(instances_path, arq)
+
+                G, V, vertex_penalties, E, edge_costs = create_graph_from(arq_path)
+
+                # ###################################################################
+                # Generate subgraph of G connecting terminals #
+                #####################################################################
+
+                terminais = vert_premios(G)
+
+                G_terminais, E_terminais, edge_costs_terminais = \
+                    select_sub_graph(G, terminais)
+
+                # ##################################################
+                # Generate partial initial solution with kruskal algorithm #
+                ####################################################
+                #
+
+                T_terminais, T_terminais_edges_list = \
+                    kruskal(G_terminais, E_terminais, edge_costs_terminais)
+
+                sol_T_terminais = calc_pontuacao(G, T_terminais)
+
+                print('#-----------------------------------------------------------------#\n')
+                print("Score of Kruskal partial inicial solution: %s" % sol_T_terminais)
+
+                # ##################################################
+                # Generating initial solution removing costly leafs #
+                ####################################################
+                #
+
+                Pruned_T_Terminais = remove_costly_leafs(T_terminais)
+
+                sol_Pruned_T_terminais = calc_pontuacao(G, Pruned_T_Terminais)
+
+
+                print("Score of initial solution: %s" % sol_Pruned_T_terminais)
+                print('#-----------------------------------------------------------------#\n')
+
+
+                # ##################################################
+                # Running simulated anealing #
+                ####################################################
+
+
+                S = Pruned_T_Terminais.copy()
+
+                start_time = datetime.now()
+
+                Star_S = SA(G, Temp_ini, Temp_fin, S, SA_MAX, f)
+
+                end_time = datetime.now()
+
+                process_time = str(end_time - start_time)
+
+                print('#-----------------------------------------------------------------#\n')
+                print('Processing time: {}'.format(process_time))
+                print('#-----------------------------------------------------------------#\n')
+
+                sol_Star_S = calc_pontuacao(G, Star_S)
+
+                print('#-----------------------------------------------------------------#\n')
+                print("Score of Star_S %s" % sol_Star_S)
+                print('#-----------------------------------------------------------------#\n')
+
+                # ##################################################
+                # Generating files with results #
+                ####################################################
+
+                path_results = create_xlsx(instances_path, arg_number, arq, G, S, Star_S, sol_Pruned_T_terminais, sol_Star_S,
+                                        Temp_ini, Temp_fin, f, SA_MAX, process_time)
+
+
+        create_resume(path_results)
+
+
+    print('#-----------------------------------------------------------------#\n')
+    print("FIM DO PROCESSAMENTO")
+    print('#-----------------------------------------------------------------#\n')
+
