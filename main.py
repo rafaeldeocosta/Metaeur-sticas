@@ -26,7 +26,7 @@ if __name__ == "__main__":
     instances = os.listdir(instances_path)
 
     # [Temp_ini, Temp_fin, SA_max, cooling_str, SA type]  # SA_type must be SA or SA-LNS
-    args = [[1000, 1, 20, "linear", 'SA-LNS']]
+    args = [[1000, 1, 50, "linear", 'SA'], [1000, 1, 50, "linear", 'SA-LNS']]
 
     max_simul = 5  # number of simulations
 
