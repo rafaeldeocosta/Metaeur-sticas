@@ -6,7 +6,7 @@ from igraph import Graph
 from igraph import plot
 import itertools as it
 
-
+from cooling import get_cooling_strategy
 
 def create_graph_from_stp(f):
     """
@@ -493,6 +493,8 @@ def create_xlsx(path, arg_number, instance, G, initial_S, star_S,
 
     # ------------------------------------------------------------ X
 
+    f = get_cooling_strategy(f)
+
     resume = pd.DataFrame({'Nome da Instancia': [instance], 'Pontuação Inicial': [initial_pont],
                            'Pontuação Final': [star_pont], 'T inicial': [temp_ini], 'T final': [temp_f],
                            'f decaimento': [f], 'iterações Metropolis': [SA_max],
@@ -548,7 +550,7 @@ if __name__ == "__main__":
 
             layout = G.layout("lgl")
             G.vs["label"] = G.vs["name"]
-            plot(G,layout=layout)
+            plot(G, layout=layout)
 
 
     # arq = "instances/our-instances/PCSPG-ACTMODPC/drosophila005.stp"
