@@ -5,6 +5,8 @@ import pandas as pd
 from igraph import Graph
 from igraph import plot
 import itertools as it
+import matplotlib.pyplot as plt
+
 
 from cooling import get_cooling_strategy
 
@@ -24,7 +26,7 @@ def create_graph_from_stp(f):
 
     """
 
-    fd = open(f, "r")
+    fd = open(f, "r", encoding='UTF-8')
     instance = fd.readlines()
     # for i in instance:
     #     print(i)
@@ -434,6 +436,11 @@ def get_graph_of_terminals():
 def create_xlsx(path, n_simul, arg_number, instance, G, initial_S, star_S,
                 initial_pont, star_pont, temp_ini, temp_f, f, SA_max, process_time, points):
 
+    """
+    A função cria o arquivo de solução da instância.
+
+    """
+
     folder_name = 'Results_' + str(arg_number)
 
     if folder_name not in os.listdir(path):
@@ -510,10 +517,15 @@ def create_xlsx(path, n_simul, arg_number, instance, G, initial_S, star_S,
 
 def create_resume(results_path):
 
+    """
+        Cria o arquivo de resumo dos resultados de uma instância.
+    """
+
     files = os.listdir(results_path)
 
     df = pd.DataFrame()
 
+    # For each result file join resume in df
     for f in files:
 
         f_path = os.path.join(results_path, f)
@@ -526,6 +538,206 @@ def create_resume(results_path):
     df.to_excel(out_dir, index=False)
 
     return 'fim'
+
+
+def join_resumes(path):
+    """
+        Create "all_resumes.xlsx", a file with all resumes from all instances in all groups.
+        "all_resumes" ->> contains all instances and some statistics (mean, std...)
+    :param path: 'string'
+        Path of folder with groups.
+    """
+
+    directories = os.listdir(path)
+
+    directories = [item for item in directories if os.path.isdir(os.path.join(path, item))]
+
+    df = pd.DataFrame()
+
+    # for each group folder
+    for group_folder in directories:
+
+        instace_path = os.path.join(path, group_folder)
+
+        results = os.listdir(instace_path)
+
+        results = [item for item in results if 'Results' in item]
+
+        # for each instance folder
+        for folder_2 in results:
+
+            results_path = os.path.join(instace_path, folder_2)
+
+            list_results = os.listdir(results_path)
+
+            if 'Resume.xlsx' in list_results:
+
+                resume_path = os.path.join(results_path, 'Resume.xlsx')
+
+                df_aux = pd.read_excel(resume_path)
+
+                df_aux['Grupo'] = group_folder
+
+                df = df.append(df_aux)
+
+    if not df.empty:
+
+        df['type'] = df['Bilhetes'].apply(lambda x: 'SA' if x == '[1, 1, 1]' else 'SA-LNS')
+
+        df['Time'] = df['Time'].str.split('.').apply(lambda x: x[0])
+
+        writer = pd.ExcelWriter(os.path.join(path, 'all_resumes.xlsx'), engine='xlsxwriter')
+
+        # Create excel file with all instances
+        df.to_excel(writer, sheet_name='Resume', index=False)
+
+        stats = pd.DataFrame(columns=['Grupo', 'Tipo', 'Instancia', 'Sol_ini', 'Melhor_sol', 'Pior_sol',
+                                      'Med_Sol_f', 'std_sol_f', 'Tempo'])
+
+        # For each instance
+        for instance in df['Instancia'].unique():
+
+            df_med = df.loc[df['Instancia'] == instance]
+
+            # for each group
+            for grupo in df_med['Grupo'].unique():
+
+                df_grupo = df_med[df_med['Grupo'] == grupo]
+
+                # for each type
+                for type in ['SA', 'SA-LNS']:
+
+                    if type in list(df_med['type'].unique()):
+
+                        # Genarate metrics of analisys
+                        df_type = df_grupo.loc[df_grupo['type'] == type]
+
+                        describe = df_type.describe().loc[['mean', 'std', 'max', 'min']]
+
+                        time = pd.to_datetime(df_type['Time']).mean().time().strftime('%H:%M:%S')
+
+                        add = pd.Series([grupo, type, instance, describe.loc['mean', 'Sol_ini'], describe.loc['min', 'Sol_f'],
+                                         describe.loc['max', 'Sol_f'], describe.loc['mean', 'Sol_f'],
+                                         describe.loc['std', 'Sol_f'], time],
+                                        index=['Grupo', 'Tipo', 'Instancia', 'Sol_ini', 'Melhor_sol', 'Pior_sol', 'Med_Sol_f',
+                                               'std_sol_f', 'Tempo'])
+
+                        stats = stats.append(add, ignore_index=True)
+
+        stats.to_excel(writer, sheet_name='Medias', index=False)
+
+        writer.save()
+
+
+def le_saida(instance_path, sheet):
+
+    """
+    This function read an instance result file, and transforms to igraph.Graph
+    :param instance_path: 'string'
+        Instance result path
+    :param sheet: 'string'
+        Name of sheet with graph, in instace result file
+    :return: igraph.Graph
+        Graph of sheet.
+    """
+
+    # reading excel file
+    df_graph = pd.read_excel(instance_path, sheet_name=sheet)
+
+    ref = df_graph.loc[df_graph['name'] == 'source'].index[0]
+
+    graph_vertices = df_graph.loc[:ref - 2][['name', 'penalties']]
+
+    graph_edges = df_graph.loc[ref:]
+
+    graph_edges.columns = graph_edges.iloc[0].values
+
+    graph_edges.drop(graph_edges.index[0], inplace=True)
+
+    graph_edges.reset_index(inplace=True, drop=True)
+
+    G = Graph()
+
+    G.add_vertices(graph_vertices['name'].to_list(), attributes={'penalties': graph_vertices['penalties'].to_list()})
+
+    v_guide = G.get_vertex_dataframe()['name'].to_dict()
+
+    v_guide = {v: k for k, v in v_guide.items()}
+
+    graph_edges['source'].replace(v_guide, inplace=True)  # Substitui o valor de source (que e index) para NOME
+    graph_edges['target'].replace(v_guide, inplace=True)  # Substitui o valor de target (que e index) para NOME
+
+    tuplas = graph_edges[['source', 'target']].apply(tuple, axis=1).to_list()
+
+    G.add_edges(tuplas, attributes={'cost': graph_edges['cost'].to_list()})
+
+    return G
+
+
+def graph_results(path):
+
+    """
+        Created png figure of solutions (instances result) in path.
+    :param path:
+    :return:
+    """
+
+    directories = os.listdir(path)
+
+    if 'Graficos' not in directories:
+        os.mkdir(os.path.join(path, 'Graficos'))
+
+    for instance in directories:
+
+        if 'Graf' not in instance:
+
+            instance_path = os.path.join(path, instance)
+
+            G = le_saida(instance_path, 'Instance')
+
+            Star = le_saida(instance_path, 'Star_S')
+
+            # Sol_ini = le_saida(instance_path, '')
+
+            G_vert = G.get_vertex_dataframe()
+            v_star_G = G_vert.loc[G_vert['name'].isin(Star.get_vertex_dataframe()['name'].to_list())].index
+
+            e_star_G = []
+            for edge in Star.es:
+
+                u = Star.vs.find(edge.tuple[0])['name']
+                v = Star.vs.find(edge.tuple[1])['name']
+
+                edge_G = G.es.select(_source=G.vs.find(name=u), _target=G.vs.find(name=v)).indices[0]
+
+                e_star_G.append(edge_G)
+
+            G.vs["label"] = G.vs["name"]
+            Star.vs["label"] = Star.vs["name"]
+
+            # juntos
+            V_colors_G = ['rgb(255, 178, 102)'  if v.index not in v_star_G else 'green' for v in G.vs]
+            E_colors_G = ['black' if e.index not in e_star_G else 'rgb(0, 204, 0)' for e in G.es]
+            E_width_G = [1 if e.index not in e_star_G else 2 for e in G.es]
+
+            plot_path = os.path.join(path, 'J_' + instance.split('.')[0] + '.png')
+            plot(G, plot_path, vertex_color=V_colors_G, edge_width=E_width_G, edge_color=E_colors_G)
+
+            # Separados
+
+            # G
+            V_colors_G = ['rgb(255, 178, 102)' for v in G.vs]
+            plot_path = os.path.join(path, 'G_' + instance.split('.')[0] + '.png')
+            plot(G, plot_path, vertex_color=V_colors_G)  # plot G
+
+            # Star
+            V_color_S = ['green' for v in Star.vs]
+            plot_path = os.path.join(path, 'S_' + instance.split('.')[0] + '.png')
+            plot(Star, plot_path, vertex_color=V_color_S)  # plot Star
+
+
+    return 'fim'
+
 
 
 if __name__ == "__main__":

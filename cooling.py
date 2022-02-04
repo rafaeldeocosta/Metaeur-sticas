@@ -13,6 +13,8 @@ def get_cooling_strategy(cooling_str):
         f = 'Temp_ini - (10 * t)'
     elif cooling_str == "logarithm":
         f = '1 / log(t + 0.5)'
+    elif cooling_str == 'geometric':
+        f = 'Temp_curr*0.9'
 
     return f
 
